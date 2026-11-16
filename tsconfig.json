@@ -1,0 +1,29 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ESNext",
+		"types": ["bun", "vite/client"],
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"skipLibCheck": true,
+		"moduleResolution": "bundler",
+		"isolatedModules": true,
+		"moduleDetection": "force",
+		"allowJs": true,
+		"strict": true,
+		"paths": {
+			"@/*": ["./src/*"],
+			"@config/*": ["./src/config/*"],
+			"@client/*": ["./src/client/*"],
+			"@core/*": ["./src/core/*"],
+			"@lib/*": ["./src/lib/*"],
+			"@plugins/*": ["./src/plugins/*"],
+			"@server/*": ["./src/server/*"],
+			"@workers/*": ["./src/workers/*"],
+			"ogygia": ["./src/lib/ogygia/index.ts"]
+		},
+		"allowImportingTsExtensions": true,
+		"noEmit": true
+	},
+	"include": ["src/**/*.ts", "tests/**/*.ts", "benches/**/*.ts", "server.ts", "drizzle.config.ts"],
+	"exclude": ["dist", ".trash", "node_modules"]
+}

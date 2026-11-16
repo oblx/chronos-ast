@@ -1,0 +1,6 @@
+{
+	"name": "Chronos — Static Code Analysis & Architecture Comprehension Engine",
+	"description": "High-performance open-source static code analysis, AST metamodel database, and Svelte 5 tactical HUD visualizer powered by Bun and Drizzle SQLite.",
+	"requestFramePermissions": [],
+	"majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

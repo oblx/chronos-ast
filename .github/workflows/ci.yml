@@ -1,0 +1,24 @@
+name: Chronos CI
+
+on:
+	push:
+		branches: [main]
+	pull_request:
+		branches: [main]
+
+jobs:
+	verify-and-qa:
+		runs-on: ubuntu-latest
+		steps:
+			- uses: actions/checkout@v4
+			- uses: oven-sh/setup-bun@v2
+				with:
+					bun-version: latest
+			- name: Install Dependencies
+				run: bun install --frozen-lockfile
+			- name: Run Verification Suite & Invariant Audit
+				run: bun run verify
+			- name: Run Performance Benchmarks
+				run: bun run bench
+			- name: Run Reproducible Ephemeral QA Harness
+				run: bun run qa:report

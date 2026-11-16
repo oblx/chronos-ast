@@ -1,0 +1,142 @@
+/**
+ * @author Oblx <code@oblx.dev>
+ * @description Core application metadata (v1.6.1), WebSocket Hub constants, Projects visibility, PKZIP constants, Graph Projections, and API routes.
+ */
+
+export const APP_METADATA = {
+	NAME: 'Chronos', VERSION: '1.9.5', LICENSE: 'MIT', AUTHOR: 'Oblx <code@oblx.dev>',
+	ENGINE_LABEL: 'BUN_NATIVE_SQLITE_INDEXEDDB_MEMGRAPH_MCP_WS100',
+} as const;
+
+export const LOBBY_ENGAGEMENT_LOCK_MS = 5000 as const;
+
+export const PROJECT_VISIBILITY = {
+	PRIVATE: 'PRIVATE', INTERNAL: 'INTERNAL', TEAM: 'TEAM', PUBLIC: 'PUBLIC', PUBLIC_DEMO: 'PUBLIC_DEMO',
+} as const;
+export type ProjectVisibility = (typeof PROJECT_VISIBILITY)[keyof typeof PROJECT_VISIBILITY];
+
+export const WS_CONFIG = {
+	ENDPOINT: '/ws/collab', PATH: '/ws/collab', ENABLED: true, MAX_CLIENTS: 100,
+	HEARTBEAT_INTERVAL_MS: 15000, HEARTBEAT_MS: 15000, IDLE_TIMEOUT_MS: 45000,
+	MAX_PAYLOAD_BYTES: 65536, MAX_BUFFERED_BYTES: 131072, MSG_RATE_LIMIT_PER_SEC: 30, RATE_LIMIT_MSGS_PER_SEC: 30,
+	CURSOR_THROTTLE_HZ: 20, CURSOR_THROTTLE_MS: 50, RECONNECT_BASE_MS: 500, RECONNECT_MAX_MS: 15000,
+	CLOSE_TRY_AGAIN_LATER: 1013, CLOSE_POLICY_VIOLATION: 1008,
+} as const;
+
+export const HTTP_STATUS = { OK: 200, BAD_REQUEST: 400, UNAUTHORIZED: 401, FORBIDDEN: 403, NOT_FOUND: 404, TOO_MANY_REQUESTS: 429 } as const;
+
+export const PKZIP_CONSTANTS = {
+	LOCAL_FILE_HEADER_SIG: 0x04034b50, CENTRAL_DIR_HEADER_SIG: 0x02014b50, END_OF_CENTRAL_DIR_SIG: 0x06054b50,
+	METHOD_STORE: 0, METHOD_DEFLATE: 8, HEADER_FIXED_SIZE: 30, CENTRAL_FIXED_SIZE: 46, EOCD_FIXED_SIZE: 22,
+	VERSION_20: 20, OFFSET_VERSION: 4, OFFSET_METHOD: 8, OFFSET_COMPRESSED_SIZE: 18, OFFSET_UNCOMPRESSED_SIZE: 22,
+	OFFSET_NAME_LEN: 26, OFFSET_EXTRA_LEN: 28, IGNORED_PATH_SEGMENTS: ['node_modules/', '.git/', 'dist/', '__MACOSX/', '.DS_Store'] as const,
+} as const;
+
+export const GRAPH_ENGINES = { SQLITE_LOCAL: 'SQLITE_LOCAL', MEMGRAPH_BOLT: 'MEMGRAPH_BOLT' } as const;
+export type GraphEngineMode = (typeof GRAPH_ENGINES)[keyof typeof GRAPH_ENGINES];
+export const MEMGRAPH_CONSTANTS = { MAX_TRANSITIVE_HOPS: 12, DEFAULT_TRANSITIVE_HOPS: 6, UNWIND_BATCH_SIZE: 500, COMPLEXITY_HOTSPOT_FLOOR: 15, CENTRALITY_SCALE: 1000 } as const;
+
+export const CK_THRESHOLDS = {
+	WMC_WARNING: 20, WMC_CRITICAL: 30, DIT_WARNING: 3, DIT_CRITICAL: 5, NOC_WARNING: 6, NOC_CRITICAL: 12,
+	CBO_WARNING: 8, CBO_CRITICAL: 16, RFC_WARNING: 25, RFC_CRITICAL: 45, MAIN_SEQUENCE_WARNING: 0.45, MAIN_SEQUENCE_CRITICAL: 0.7,
+} as const;
+
+export const MAX_MACRO_EXPANSION_DEPTH = 16 as const;
+export const MAX_ALIAS_WORKLIST_PASSES = 16 as const;
+export const FUZZY_MAX_EDIT_DISTANCE = 1 as const;
+export const LEVENSHTEIN_UNBOUNDED_DISTANCE = 99 as const;
+export const UML_PROJECTION_LIMITS = { FALLBACK_CLASS_CAP: 8, MIN_SHARED_ACCESSORS: 1 } as const;
+export const ARCH_RECENCY_THRESHOLDS_DAYS = { TODAY: 1, THIS_WEEK: 7, THIS_MONTH: 30, THIS_QUARTER: 90 } as const;
+export const SEARCH_FIELD_PREFIXES = { STRING: 'string:', IDENTIFIER: 'identifier:', COMMENT: 'comment:' } as const;
+export const COMPARE_CHURN_WEIGHTS = { ADDED_WEIGHT: 1, REMOVED_WEIGHT: 1, CHANGED_WEIGHT: 2 } as const;
+export const COMPARE_STATUS = { ADDED: 'ADDED', REMOVED: 'REMOVED', MODIFIED: 'MODIFIED', UNCHANGED: 'UNCHANGED' } as const;
+export type CompareStatus = (typeof COMPARE_STATUS)[keyof typeof COMPARE_STATUS];
+
+export const HIS_SAFETY_THRESHOLDS = {
+	CYCLOMATIC_STRICT_MAX: 10, KNOTS_MAX: 0, COUNT_PATH_MAX: 80, NESTING_DEPTH_MAX: 4,
+	CALL_LEVELS_MAX: 5, GOTO_STATEMENTS_MAX: 0, DEBOUNCE_WATCH_MS: 16, INCREMENTAL_BUDGET_MS: 50,
+} as const;
+
+export const WORKSPACE_DEFAULTS = {
+	CORE_ID: 'ws-chronos-core', CORE_NAME: 'Chronos Core Workspace', CORE_SHORT_CODE: 'CHR-CORE',
+	UPLOADED_NAME: 'Uploaded Archive Workspace', REMOTE_NAME: 'Remote URL Workspace',
+	PRESET_KEYS: { CHRONOS_KERNEL: 'CHRONOS_KERNEL', HEXAGONAL_GRAPH: 'HEXAGONAL_GRAPH' },
+	FILTER_ALL: 'ALL', FALLBACK_ENTITY_ID: 1, OFFLINE_RESTORE_MICROS: 1,
+	DEFAULT_INGEST_PATH: 'src/plugins/kernels/quantum_router.ts', SAMPLE_REMOTE_URL: '/api/metamodel/export?format=WORKSPACE_BUNDLE',
+} as const;
+
+export const HUD_CONFIG = {
+	REFRESH_RATE_MS: 16, PRECISION_SCALE: 1000, PERCENTAGE_MAX: 100, PERCENTAGE_MIN: 0,
+	DEFAULT_GRAPH_DEPTH: 2, MAX_GRAPH_DEPTH: 4, DSM_MAX_DIMENSION: 12, RADAR_MAX_BLIPS: 36, CANVAS_RENDER_NODE_THRESHOLD: 2500,
+	METRIC_DEFAULTS: { LOC: 1, CYCLOMATIC: 1, HALSTEAD_VOLUME: 10, COUPLING: 0, INSTABILITY: 0, LCOM_MIN: 1 },
+	METRIC_THRESHOLDS: { LOC_WARNING: 500, LOC_CRITICAL: 1500, COMPLEXITY_WARNING: 10, COMPLEXITY_CRITICAL: 25, INSTABILITY_WARNING: 0.7, INSTABILITY_CRITICAL: 0.9, HALSTEAD_WARNING: 800, HALSTEAD_CRITICAL: 2400, LCOM_WARNING: 2, LCOM_CRITICAL: 4 },
+} as const;
+
+export const PARSER_WORKER_CHANNELS = {
+	INDEX_FILE: 'INDEX_FILE', PARSE_AST: 'PARSE_AST', CALCULATE_METRICS: 'CALCULATE_METRICS',
+	COMPLETION_REPORT: 'COMPLETION_REPORT', WORKER_ERROR: 'WORKER_ERROR',
+} as const;
+export type WorkerChannel = (typeof PARSER_WORKER_CHANNELS)[keyof typeof PARSER_WORKER_CHANNELS];
+
+export const API_ROUTES = {
+	SNAPSHOT: '/api/metamodel/snapshot', ENTITY_DETAIL: '/api/metamodel/entity', ANALYZE_SOURCE: '/api/metamodel/analyze',
+	REINDEX_WORKSPACE: '/api/metamodel/reindex', EXPORT_REPORT: '/api/metamodel/export', WORKSPACES: '/api/metamodel/workspaces',
+	PROJECTS: '/api/projects', INGEST_GIT: '/api/projects/ingest-git', GIT_PR: '/api/projects/git-pr',
+	THEMES: '/api/themes', THEME_FAVORITE: '/api/themes/favorite', USER_PREFERENCES: '/api/preferences',
+	AI_CHAT: '/api/metamodel/ai-chat',
+	GRAPH_QUERY: '/api/metamodel/graph-query', HELP_BOOK: '/api/metamodel/help', AUTH_LOGIN: '/api/auth/login',
+	AUTH_REGISTER: '/api/auth/register', AUTH_REFRESH: '/api/auth/refresh', AUTH_LOGOUT: '/api/auth/logout',
+	AUTH_PROMOTE: '/api/auth/promote', AUTH_PASSKEY_CHALLENGE: '/api/auth/passkey/challenge', AUTH_PASSKEY_VERIFY: '/api/auth/passkey/verify',
+	AUTH_OIDC_START: '/api/auth/oidc/start', AUTH_OIDC_CALLBACK: '/api/auth/oidc/callback', AUTH_OAUTH_GITHUB: '/api/auth/oauth/github',
+	AUTH_OAUTH_GOOGLE: '/api/auth/oauth/google', AUTH_DEV_SWITCH: '/api/auth/dev-switch', AUTH_PAT: '/api/auth/pat',
+	VAULT_SECRETS: '/api/vault/secrets', SYNC_RECONCILE: '/api/sync/reconcile', SYNC_HLC: '/api/sync/hlc', SECURITY_STATUS: '/api/security/status',
+	SECURITY_AUDIT: '/api/security/audit', SECURITY_ROLES: '/api/security/roles', SECURITY_RBAC_NODES: '/api/security/rbac-nodes',
+	SECURITY_LOCKDOWN: '/api/security/lockdown', SECURITY_REVOKE: '/api/security/revoke', SECURITY_WIRE_OBSERVE: '/api/security/wire-observe', WS_COLLAB: '/api/ws/collab',
+	COLLAB_FRIENDS: '/api/collab/friends', COLLAB_INVITES: '/api/collab/invites', COLLAB_OVERRIDE: '/api/collab/override',
+	GAMIFICATION_STATE: '/api/gamification/state', GAMIFICATION_RULES: '/api/gamification/rules', GAMIFICATION_AWARD: '/api/gamification/award',
+	PRIVACY_EXPORT: '/api/privacy/export-me', PRIVACY_ERASE: '/api/privacy/erase-me',
+	MCP_FORENSIC: '/api/mcp', MCP_TWIN: '/api/mcp/twin', MCP_MANIFEST: '/api/mcp/manifest',
+} as const;
+
+export const WORKFLOW_WEBHOOK_EVENTS = {
+	PROJECT_INDEXED: 'PROJECT_INDEXED',
+	CODECHECK_REGRESSION: 'CODECHECK_REGRESSION',
+	PR_PUBLISHED: 'PR_PUBLISHED',
+	TWIN_INTENT_EXECUTED: 'TWIN_INTENT_EXECUTED',
+} as const;
+export type WorkflowWebhookEvent = (typeof WORKFLOW_WEBHOOK_EVENTS)[keyof typeof WORKFLOW_WEBHOOK_EVENTS];
+
+export const WORKFLOW_CONFIG_KEYS = {
+	WEBHOOK_URL: 'workflow.webhook_url',
+	WEBHOOK_EVENTS: 'workflow.webhook_events',
+	WEBHOOK_SECRET_ID: 'workflow.webhook_secret_id',
+} as const;
+
+export const GRAPH_PROJECTIONS = {
+	CODEMAP: 'CODEMAP', BUTTERFLY: 'BUTTERFLY', CONTROL_FLOW: 'CONTROL_FLOW', DATA_FLOW: 'DATA_FLOW', UML_CLASS: 'UML_CLASS',
+	UML_SEQUENCE: 'UML_SEQUENCE', SHARED_OBJECTS: 'SHARED_OBJECTS', TREEMAP: 'TREEMAP', DSM: 'DSM', MERMAID: 'MERMAID',
+} as const;
+export type GraphProjectionMode = (typeof GRAPH_PROJECTIONS)[keyof typeof GRAPH_PROJECTIONS];
+
+export const HUD_VIEWS = { ...GRAPH_PROJECTIONS, MATRIX: 'MATRIX', INSPECTOR: 'INSPECTOR', SOURCE: 'INSPECTOR' } as const;
+export const VIEW_MODES = HUD_VIEWS;
+export type HudViewMode = (typeof HUD_VIEWS)[keyof typeof HUD_VIEWS];
+
+export const EXPORT_FORMATS = {
+	WORKSPACE_BUNDLE: 'WORKSPACE_BUNDLE', SONARQUBE: 'SONARQUBE', CYTOSCAPE: 'CYTOSCAPE', MEMGRAPH_CYPHER: 'MEMGRAPH_CYPHER',
+	SARIF_210: 'SARIF_210', VECTOR_SVG: 'VECTOR_SVG', GRAPHVIZ_DOT: 'GRAPHVIZ_DOT', COMPLIANCE_HTML: 'COMPLIANCE_HTML',
+	COMPLIANCE_CSV: 'COMPLIANCE_CSV', PLANTUML_PUML: 'PLANTUML_PUML', MERMAID_CLASS: 'MERMAID_CLASS', MERMAID_FLOWCHART: 'MERMAID_FLOWCHART',
+} as const;
+export type ExportFormat = (typeof EXPORT_FORMATS)[keyof typeof EXPORT_FORMATS];
+
+export const WORKSPACE_OPERATIONS = {
+	OPEN: 'OPEN', CLOSE: 'CLOSE', SAVE: 'SAVE', REINDEX: 'REINDEX',
+	IMPORT: 'IMPORT', IMPORT_FILES: 'IMPORT_FILES', IMPORT_URL: 'IMPORT_URL', EXPORT: 'EXPORT',
+} as const;
+export type WorkspaceOperation = (typeof WORKSPACE_OPERATIONS)[keyof typeof WORKSPACE_OPERATIONS];
+
+export const WORKSPACE_EVENT_KINDS = {
+	HYDRATED: 'WORKSPACE_HYDRATED', OPENED: 'WORKSPACE_OPENED', CLOSED: 'WORKSPACE_CLOSED',
+	SAVED: 'WORKSPACE_SAVED', INDEXED: 'WORKSPACE_INDEXED', SWITCHED: 'WORKSPACE_SWITCHED',
+} as const;
+export type WorkspaceEventKind = (typeof WORKSPACE_EVENT_KINDS)[keyof typeof WORKSPACE_EVENT_KINDS];

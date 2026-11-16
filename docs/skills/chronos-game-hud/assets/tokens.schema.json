@@ -1,0 +1,33 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"title": "Chronos Game-HUD Theme & Zone Tokens",
+	"type": "object",
+	"required": ["zones", "themes", "disclosureTiers", "foldEasing"],
+	"properties": {
+		"foldEasing": { "type": "string", "const": "cubic-bezier(0.16, 1, 0.3, 1)" },
+		"zones": {
+			"type": "array",
+			"minItems": 11,
+			"maxItems": 11,
+			"items": {
+				"type": "string",
+				"enum": [
+					"TOP_LEFT", "TOP_CENTER", "TOP_RIGHT", "RIGHT_EDGE",
+					"BOTTOM_RIGHT", "BOTTOM_CENTER", "BOTTOM_LEFT", "LEFT_EDGE",
+					"WORLD_CANVAS", "APP_BACKGROUND", "APP_MODAL"
+				]
+			}
+		},
+		"disclosureTiers": {
+			"type": "array",
+			"items": { "type": "string", "enum": ["TIER_1_VERDICT", "TIER_2_SUMMARY", "TIER_3_FORENSIC"] }
+		},
+		"themes": {
+			"type": "array",
+			"items": {
+				"type": "string",
+				"enum": ["OBSIDIAN_CYBER", "TITANIUM_NIGHT", "VOID_AMBER", "CLINICAL_LAB", "PAPER_ARCHITECT", "DAYLIGHT_SOLAR"]
+			}
+		}
+	}
+}

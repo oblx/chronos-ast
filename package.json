@@ -1,0 +1,36 @@
+{
+	"name": "chronos-analysis-engine",
+	"version": "1.9.5",
+	"private": true,
+	"author": "Oblx <code@oblx.dev>",
+	"license": "MIT",
+	"type": "module",
+	"scripts": {
+		"dev": "DEVMODE=false bun --bun vite --port=3000 --host=0.0.0.0",
+		"build": "bun --bun vite build",
+		"start": "bun run server.ts",
+		"preview": "bun --bun vite preview --port=3000 --host=0.0.0.0",
+		"test": "bun test",
+		"bench": "bun run benches/parser.bench.ts && bun run benches/graph_traversal.bench.ts && bun run benches/metric_reduction.bench.ts",
+		"lint": "bun x tsc --noEmit",
+		"verify": "bun run lint && bun test && bun run build",
+		"qa:report": "bun run src/workers/qa/qa.runner.ts",
+		"mcp:token": "bun run src/workers/cli/mint_mcp_token.ts",
+		"clean": "mkdir -p .trash && mv -f dist .svelte-kit .trash/ 2>/dev/null || true"
+	},
+	"dependencies": {
+		"drizzle-orm": "^0.45.4",
+		"lucide-svelte": "^1.0.1"
+	},
+	"devDependencies": {
+		"@sveltejs/vite-plugin-svelte": "^7.3.1",
+		"@tailwindcss/vite": "^4.3.3",
+		"@types/bun": "^1.4.4",
+		"autoprefixer": "^10.4.21",
+		"esbuild": "^0.25.0",
+		"svelte": "^5.57.3",
+		"tailwindcss": "^4.3.3",
+		"typescript": "^7.0.2",
+		"vite": "^8.3.0"
+	}
+}
