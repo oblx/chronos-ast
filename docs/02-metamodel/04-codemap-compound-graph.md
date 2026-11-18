@@ -10,13 +10,13 @@ The Full-Project Codemap (`CODEMAP`, Crown Slot 1) provides a macro-to-micro com
 
 $$\text{Score}(v) = 50 \cdot \mathbb{I}(C_a(v) = 0 \land C_e(v) > 0) + \min(40, 8 \cdot C_e(v)) + \sum_{k} w_k \cdot \mathbb{I}(k \in \text{Name}(v))$$
 
-* **Genesis Entry Detector (`src/core/graph/codemap/entry.detector.ts`):** Ranks `FILE`, `MODULE`, and `FUNCTION` entities with zero inbound `IMPORTS` or `CALLS` ($C_a = 0, C_e > 0$) alongside bootstrap lexical markers (`server`, `main`, `index`, `app`, `cli`, `boot`, `dispatch`, `router`), tagging Tier-0 roots with `⚡ GENESIS ROOT` and `⚡ ENTRY` beacons.
+* **Genesis Entry Detector (`src/core/graph/codemap/entry.detector.ts`):** Ranks `FILE`, `MODULE`, and `FUNCTION` entities with zero inbound `IMPORTS` or `CALLS` ($C_a = 0, C_e > 0$) alongside bootstrap lexical markers (`server`, `main`, `index`, `app`, `cli`, `boot`, `dispatch`, `router`), tagging Tier-0 roots with `GENESIS ROOT` and `ENTRY` beacons.
 * **Compound Architecture Hulls (`src/core/graph/codemap/codemap.projection.ts`):** Executes a breadth-first topological traversal from all Genesis Entry Points across `IMPORTS`, `CALLS`, `INHERITS`, `IMPLEMENTS`, and `DEFINES` edges to nest Depth Rings ($\text{Ring } 0 \to \text{Ring } N$) $\supset$ Directory/Module Clusters $\supset$ File Containers $\supset$ Class, Function, and Variable Symbols.
-* **Entry-Point Travel Spine (`traceCodemapEntryPath`):** Clicking `[ ⚡ Trace from Entry Point ]` highlights the shortest directed execution spine (`Hop 0 [Entry] -> Hop 1 -> ... -> Target`) from the nearest Genesis Entry Point to the active focal entity.
+* **Entry-Point Travel Spine (`traceCodemapEntryPath`):** Clicking `[ Trace from Entry Point ]` highlights the shortest directed execution spine (`Hop 0 [Entry] -> Hop 1 -> ... -> Target`) from the nearest Genesis Entry Point to the active focal entity.
 
 | Ring / Layer | Structural Unit | Visual Signifier | Primary Telemetry |
 | :--- | :--- | :--- | :--- |
-| **Tier 0 (`Ring 0`)** | Genesis Root Cluster | Emerald border + `⚡ ENTRY` badge | Fan-out $C_e$, file count, total LOC |
+| **Tier 0 (`Ring 0`)** | Genesis Root Cluster | Emerald border + `ENTRY` badge | Fan-out $C_e$, file count, total LOC |
 | **Tier $1..N$ (`Ring k`)** | Downstream Module Hull | Chamfered package bounding box | Aggregate cross-module highway splines |
 | **Cyclic SCC Hull** | Tarjan Feedback Cluster | Pulsing crimson dashed perimeter | Strongly connected cycle isolation |
 
@@ -28,7 +28,7 @@ To sustain 60fps pan/zoom across repositories exceeding 5,000 entities without D
 
 $$w_{\text{highway}}(e) = \max\left(1.5, \min\left(6.5, 1.6 \cdot \log_2(|E_{\text{cluster}}(e)| + 1)\right)\right)$$
 
-* **Macro LOD ($\text{zoom} < 0.45$):** Renders directory/package compound hulls, `⚡ ENTRY` beacons, aggregate cross-module highway splines with logarithmic stroke thickness, and Tarjan SCC cycle rings while omitting fine-grained symbol labels.
-* **Meso LOD ($0.45 \le \text{zoom} < 1.05$):** Reveals individual `FILE` cartridges inside each package hull displaying file health grade (`A`–`D`), LOC, maximum McCabe $v(G)$, and file-to-file dependency splines.
-* **Micro LOD ($\text{zoom} \ge 1.05$):** Unfolds child `CLASS`, `FUNCTION`, and `VARIABLE` pills nested inside each file container with one-click cross-view handoff (`→ Butterfly`, `→ CFG`, `→ Source`).
-* **Cross-View Camera & Cursor Sync (`src/client/state/navigation.sync.svelte.ts`):** Maintains `ProjectNavigationCursor` across all 9 workspace projections so switching between `Codemap`, `Butterfly`, `CFG`, and `Source` preserves `selectedEntityId`, normalized camera focus, and active travel trails.
+* **ELK-Inspired Multi-Column Ring Packing (`src/core/graph/codemap/codemap.layout.ts`, `MAX_RING_COL_HEIGHT = 440`):** Wraps each `RING k` compound hull tightly around its child file containers with zero stretched empty vertical space, folding tall rings into multi-column sub-grids so `worldWidth / worldHeight >= 1.4` (`1.65..1.95`) and `fitGraphToSafeCorridor` auto-fits at $\ge 60\%$ zoom.
+* **Macro LOD ($\text{zoom} < 0.50$) & Inverse Square-Root Counter-Scaling:** Renders compact file summary cards (`File Name`, `GRADE`, `LOC`, $v(G)$, `FN/S` count) with counter-scaled labels ($\min(1.75, 1/\sqrt{\text{zoom}})$) when $\text{zoom} < 0.70$.
+* **Meso ($0.50 \le \text{zoom} < 1.05$) & Micro ($\text{zoom} \ge 1.05$) LOD with Boundary Ports:** Expands child symbols with $6\text{px}$ chamfered `IN` (left wall) and `OUT` (right wall) port diamonds (`buildBoundaryPortPolygon`) and orthogonal highway channel splines (`buildHighwayChannelPath`).
+* **Unclipped Entry Pill & Cross-View Cursor Sync (`src/client/state/navigation.sync.svelte.ts`):** Displays the full `Entry: <file>` pill alongside a `+N Entry` cycle trigger in the sub-toolbar and preserves camera focus across all 9 workspace projections.

@@ -9,6 +9,7 @@
 	import { clientDagKernel, hudWire, redactOutboundPayload, securityWire, validateClientForm, type GraphEntityNode } from '@client/state';
 	import HudChamferButton from '@client/components/atoms/HudChamferButton.svelte';
 	import HudChamferFrame from '@client/components/atoms/HudChamferFrame.svelte';
+	import HudAnimatedResizeBody from '@client/components/molecules/HudAnimatedResizeBody.svelte';
 
 	interface Props {
 		focalEntity: GraphEntityNode | undefined; entityCount: number; violationCount: number; hasCycles: boolean;
@@ -22,7 +23,7 @@
 	let messages = $state<ChatMessage[]>([]);
 	let defaultReadout = $derived(`READY · @${focalEntity?.name ?? 'dispatch_ast_job'} · ${entityCount}E · ${hasCycles ? 1 : 0} SCC`);
 
-	$effect(() => { if (hudWire.aiPromptDraft) { promptInput = hudWire.aiPromptDraft; hudWire.aiPromptDraft = ''; } });
+	$effect(() => { const draft = hudWire.consumeAiPromptDraft(); if (draft) promptInput = draft; });
 	let latestMsg = $derived<ChatMessage>(messages[0] ?? {
 		id: 0, prompt: '/explain @Focal', mode: 'LOCAL_HEURISTIC',
 		summary: defaultReadout,
@@ -67,22 +68,24 @@
 	{#if threadExpanded}
 		<div data-testid="ai-thread-drawer" class="absolute bottom-[132px] left-0 right-0 z-30 max-h-[42vh]">
 			<HudChamferFrame profile={HULL_PROFILES.CHAMFER_CORNER_POD} chevrons={true} className="p-3 shadow-2xl">
-				<div class="flex items-center justify-between border-b border-[var(--hud-border)] pb-1.5 mb-2">
-					<span class="text-xs font-bold text-[var(--hud-accent-secondary)] uppercase">Diegetic AI Architectural Thread ({messages.length})</span>
-					<button type="button" onclick={() => (threadExpanded = false)} class="px-1.5 py-0.5 border border-[var(--hud-border)] text-[11px] text-[var(--hud-muted)] hover:text-[var(--hud-text)] cursor-pointer">Collapse [v]</button>
-				</div>
-				<div class="max-h-[30vh] overflow-y-auto flex flex-col gap-2">
-					{#each [latestMsg, ...messages.slice(1)] as msg (msg.id)}
-						<div class="p-2 border border-[var(--hud-border)] bg-[var(--hud-bg)]/85 flex flex-col gap-1">
-							<div class="flex items-center justify-between text-[10px]">
-								<span class="text-[var(--hud-accent-primary)] font-bold">&gt; {msg.prompt}</span>
-								<span class="px-1 border border-[var(--hud-border)] text-[var(--hud-nominal)]">{msg.mode}</span>
+				<HudAnimatedResizeBody transitionKey={messages.length} testid="ai-thread-resize-body">
+					<div class="flex items-center justify-between border-b border-[var(--hud-border)] pb-1.5 mb-2">
+						<span class="text-xs font-bold text-[var(--hud-accent-secondary)] uppercase">Diegetic AI Architectural Thread ({messages.length})</span>
+						<button type="button" onclick={() => (threadExpanded = false)} class="px-1.5 py-0.5 border border-[var(--hud-border)] text-[11px] text-[var(--hud-muted)] hover:text-[var(--hud-text)] cursor-pointer">Collapse [v]</button>
+					</div>
+					<div class="max-h-[30vh] overflow-y-auto flex flex-col gap-2">
+						{#each [latestMsg, ...messages.slice(1)] as msg (msg.id)}
+							<div class="p-2 border border-[var(--hud-border)] bg-[var(--hud-bg)]/85 flex flex-col gap-1">
+								<div class="flex items-center justify-between text-[10px]">
+									<span class="text-[var(--hud-accent-primary)] font-bold">&gt; {msg.prompt}</span>
+									<span class="px-1 border border-[var(--hud-border)] text-[var(--hud-nominal)]">{msg.mode}</span>
+								</div>
+								<p class="text-[11px] text-[var(--hud-text)]">{msg.summary}</p>
+								{#each msg.bullets as b}<span class="text-[10px] text-[var(--hud-muted)]">· {b}</span>{/each}
 							</div>
-							<p class="text-[11px] text-[var(--hud-text)]">{msg.summary}</p>
-							{#each msg.bullets as b}<span class="text-[10px] text-[var(--hud-muted)]">· {b}</span>{/each}
-						</div>
-					{/each}
-				</div>
+						{/each}
+					</div>
+				</HudAnimatedResizeBody>
 			</HudChamferFrame>
 		</div>
 	{/if}

@@ -38,13 +38,14 @@
 		onIngestSampleZip: () => Promise<void>;
 		onIngestRemoteUrl: (url: string, workspaceName?: string) => Promise<void>;
 		onIngestGitRepo?: (repoUrl: string, branchOrRef?: string, vaultSecretId?: string) => Promise<void>;
+		onIngestLocalSelf?: (workspaceName?: string) => Promise<void>;
 		onSaveAiConfig: (url: string, bearer: string) => void;
 		onToggleEngine: () => void;
 		onToggleHisProfile: () => void;
 		onReindexWorkspace: () => Promise<void>;
 	}
 
-	let { activeEntity, nodes, sourceMap, workspaceIds = [], modalExportJson, providerUrl, providerBearer, graphEngine, useHisSafetyProfile, onSelectEntity, onExecuteStationAction, onAddAnnotation, onImportBundleJson, onUploadZipBytes, onUploadSourceFiles, onIngestSampleZip, onIngestRemoteUrl, onIngestGitRepo, onSaveAiConfig, onToggleEngine, onToggleHisProfile, onReindexWorkspace }: Props = $props();
+	let { activeEntity, nodes, sourceMap, workspaceIds = [], modalExportJson, providerUrl, providerBearer, graphEngine, useHisSafetyProfile, onSelectEntity, onExecuteStationAction, onAddAnnotation, onImportBundleJson, onUploadZipBytes, onUploadSourceFiles, onIngestSampleZip, onIngestRemoteUrl, onIngestGitRepo, onIngestLocalSelf, onSaveAiConfig, onToggleEngine, onToggleHisProfile, onReindexWorkspace }: Props = $props();
 </script>
 
 <StationsModal isOpen={hudWire.activeModal === HUD_MODALS.STATIONS_LAUNCHER} onClose={() => hudWire.closeModal()} onExecuteAction={onExecuteStationAction} />
@@ -53,7 +54,7 @@
 <DeviationSignOffModal isOpen={hudWire.activeModal === HUD_MODALS.DEVIATION_SIGN_OFF} entity={activeEntity} onClose={() => hudWire.closeModal()} onSubmit={onAddAnnotation} />
 <HelpCenterModal isOpen={hudWire.activeModal === HUD_MODALS.SSOT_HELP_BOOK} activeView={hudWire.activeView} onClose={() => hudWire.closeModal()} onSelectView={(v) => hudWire.selectView(v)} />
 <InstantSearchModal isOpen={hudWire.activeModal === HUD_MODALS.INSTANT_SEARCH} {nodes} {sourceMap} onClose={() => hudWire.closeModal()} onSelectHit={(id) => onSelectEntity(id)} />
-<WorkspaceImportModal isOpen={hudWire.activeModal === HUD_MODALS.WORKSPACE_INGEST} exportedJson={modalExportJson} {providerUrl} {providerBearer} onClose={() => hudWire.closeModal()} {onImportBundleJson} {onUploadZipBytes} {onUploadSourceFiles} {onIngestSampleZip} {onIngestRemoteUrl} {onIngestGitRepo} {onSaveAiConfig} />
+<WorkspaceImportModal isOpen={hudWire.activeModal === HUD_MODALS.WORKSPACE_INGEST} exportedJson={modalExportJson} {providerUrl} {providerBearer} onClose={() => hudWire.closeModal()} {onImportBundleJson} {onUploadZipBytes} {onUploadSourceFiles} {onIngestSampleZip} {onIngestRemoteUrl} {onIngestGitRepo} {onIngestLocalSelf} {onSaveAiConfig} />
 <AchievementVaultModal isOpen={hudWire.activeModal === HUD_MODALS.ACHIEVEMENT_VAULT} onClose={() => hudWire.closeModal()} />
 <CollabSocialModal isOpen={hudWire.activeModal === HUD_MODALS.COLLAB_SOCIAL} activeEntityName={activeEntity?.name} onClose={() => hudWire.closeModal()} />
 <WireObservatoryModal isOpen={hudWire.activeModal === HUD_MODALS.WIRE_OBSERVATORY} onClose={() => hudWire.closeModal()} />

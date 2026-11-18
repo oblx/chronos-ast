@@ -1,11 +1,11 @@
 <!--
 	@author Oblx <code@oblx.dev>
-	@description Chronos v1.6.1 3-Column Mini-Bento Radar (Parallel corner-safe CHAMFER_PROFILES on all 6 side buttons, >=10px inner clearance, 96x96 polar scope).
+	@description Chronos v1.9.6 3-Column Mini-Bento Radar: Bilateral CornerTuple symmetry ([TL,TR,BR,BL]), 0.625rem inner clearance, 92x92 polar scope.
 -->
 <script lang="ts">
 	import { HUD_CONFIG } from '@config/constants';
 	import { HUD_INTENT_KINDS } from '@config/hud/hud.intents';
-	import { CHAMFER_PROFILES, HULL_PROFILES, HUD_ZONES } from '@config/hud.tokens';
+	import { HULL_PROFILES, HUD_ZONES, ZONE_CORNER_TUPLES } from '@config/hud.tokens';
 	import { type GraphEntityNode, clampValue, hudWire } from '@client/state';
 	import HudChamferButton from '@client/components/atoms/HudChamferButton.svelte';
 	import HudChamferFrame from '@client/components/atoms/HudChamferFrame.svelte';
@@ -56,16 +56,16 @@
 </script>
 
 <aside aria-label="Diegetic Radar Minimap and Complexity Oscilloscope" class={inline ? 'hud-track-w h-full' : 'absolute bottom-3 right-3 hud-track-w pointer-events-auto'}>
-	<HudChamferFrame profile={HULL_PROFILES.CHAMFER_CORNER_POD} chevrons={false} className="w-full h-full px-3 py-2.5 font-mono text-[11px] select-none">
-		<div class="h-full grid grid-cols-[36px_1fr_36px] items-center gap-1.5">
+	<HudChamferFrame profile={HULL_PROFILES.CHAMFER_OCTAGON} corners={ZONE_CORNER_TUPLES.BOTTOM_RIGHT} chamferPx={10} chevrons={false} className="w-full h-full px-4 py-2.5 font-mono text-[0.6875rem] select-none">
+		<div class="h-full grid grid-cols-[2rem_1fr_2rem] items-center gap-1.5">
 			<div class="h-full flex flex-col justify-between gap-1">
-				<HudChamferButton chamferCorner={CHAMFER_PROFILES.CORNER_TOP_LEFT} cutPx={6} testid="radar-zoom-in" tip="Radar Zoom In" onclick={() => fireRadarIntent(HUD_INTENT_KINDS.RADAR_ZOOM_IN)} className="w-full h-[30px] text-xs font-bold">+</HudChamferButton>
-				<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} testid="radar-zoom-out" tip="Radar Zoom Out" onclick={() => fireRadarIntent(HUD_INTENT_KINDS.RADAR_ZOOM_OUT)} className="w-full h-[30px] text-xs font-bold">-</HudChamferButton>
-				<HudChamferButton chamferCorner={CHAMFER_PROFILES.CORNER_BOTTOM_LEFT} cutPx={6} testid="radar-fit-world" tip="Fit World to Safe Corridor" onclick={() => fireRadarIntent(HUD_INTENT_KINDS.RADAR_FIT_WORLD)} className="w-full h-[30px] text-xs font-bold">⊡</HudChamferButton>
+				<HudChamferButton corners={ZONE_CORNER_TUPLES.RADAR_TOP_LEFT} cutPx={6} testid="radar-zoom-in" tip="Radar Zoom In" onclick={() => fireRadarIntent(HUD_INTENT_KINDS.RADAR_ZOOM_IN)} className="w-full h-[1.875rem] text-xs font-bold">+</HudChamferButton>
+				<HudChamferButton corners={ZONE_CORNER_TUPLES.STRAIGHT_QUAD} cutPx={5} testid="radar-zoom-out" tip="Radar Zoom Out" onclick={() => fireRadarIntent(HUD_INTENT_KINDS.RADAR_ZOOM_OUT)} className="w-full h-[1.875rem] text-xs font-bold">-</HudChamferButton>
+				<HudChamferButton corners={ZONE_CORNER_TUPLES.RADAR_BOTTOM_LEFT} cutPx={6} testid="radar-fit-world" tip="Fit World to Safe Corridor" onclick={() => fireRadarIntent(HUD_INTENT_KINDS.RADAR_FIT_WORLD)} className="w-full h-[1.875rem] text-xs font-bold">⊡</HudChamferButton>
 			</div>
 
 			<div class="flex flex-col items-center justify-center gap-0.5 min-w-0">
-				<div data-testid="bento-radar-scope" class="relative w-[92px] h-[92px] shrink-0 bg-[var(--hud-bg)] border border-[var(--hud-border)] overflow-hidden">
+				<div data-testid="bento-radar-scope" class="relative w-[5.75rem] h-[5.75rem] shrink-0 bg-[var(--hud-bg)] border border-[var(--hud-border)] overflow-hidden">
 					<svg viewBox="0 0 100 100" class="w-full h-full block">
 						<defs>
 							<radialGradient id="chronosRadarSweepGrad" cx="50%" cy="50%" r="50%">
@@ -88,13 +88,13 @@
 						{/each}
 					</svg>
 				</div>
-				<span class="text-[9px] leading-3 text-[var(--hud-muted)] tabular-nums whitespace-nowrap">{filteredNodes.length} ENT · {Math.round(hudWire.radarZoom * 100)}%</span>
+				<span class="text-[0.5625rem] leading-3 text-[var(--hud-muted)] tabular-nums whitespace-nowrap">{filteredNodes.length} ENT · {Math.round(hudWire.radarZoom * 100)}%</span>
 			</div>
 
 			<div class="h-full flex flex-col justify-between gap-1">
-				<HudChamferButton chamferCorner={CHAMFER_PROFILES.CORNER_TOP_RIGHT} cutPx={6} testid="radar-center-focal" tip="Center Focal Entity" onclick={() => fireRadarIntent(HUD_INTENT_KINDS.RADAR_CENTER_FOCAL)} className="w-full h-[30px] text-xs font-bold">⌖</HudChamferButton>
-				<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} active={hudWire.radarHotspotsOnly} variant={hudWire.radarHotspotsOnly ? 'brass' : 'default'} testid="radar-filter-hotspots" tip="Filter High-Complexity Hotspots" onclick={() => fireRadarIntent(HUD_INTENT_KINDS.RADAR_FILTER_HOTSPOTS)} className="w-full h-[30px] text-xs font-bold">!</HudChamferButton>
-				<HudChamferButton chamferCorner={CHAMFER_PROFILES.CORNER_BOTTOM_RIGHT} cutPx={6} active={hudWire.radarSweepActive} variant={hudWire.radarSweepActive ? 'accent' : 'default'} testid="radar-toggle-sweep" tip="Toggle Phosphor Sweep" onclick={() => fireRadarIntent(HUD_INTENT_KINDS.RADAR_TOGGLE_SWEEP)} className="w-full h-[30px] text-xs font-bold">◐</HudChamferButton>
+				<HudChamferButton corners={ZONE_CORNER_TUPLES.RADAR_TOP_RIGHT} cutPx={6} testid="radar-center-focal" tip="Center Focal Entity" onclick={() => fireRadarIntent(HUD_INTENT_KINDS.RADAR_CENTER_FOCAL)} className="w-full h-[1.875rem] text-xs font-bold">⌖</HudChamferButton>
+				<HudChamferButton corners={ZONE_CORNER_TUPLES.STRAIGHT_QUAD} cutPx={5} active={hudWire.radarHotspotsOnly} variant={hudWire.radarHotspotsOnly ? 'brass' : 'default'} testid="radar-filter-hotspots" tip="Filter High-Complexity Hotspots" onclick={() => fireRadarIntent(HUD_INTENT_KINDS.RADAR_FILTER_HOTSPOTS)} className="w-full h-[1.875rem] text-xs font-bold">!</HudChamferButton>
+				<HudChamferButton corners={ZONE_CORNER_TUPLES.RADAR_BOTTOM_RIGHT} cutPx={6} active={hudWire.radarSweepActive} variant={hudWire.radarSweepActive ? 'accent' : 'default'} testid="radar-toggle-sweep" tip="Toggle Phosphor Sweep" onclick={() => fireRadarIntent(HUD_INTENT_KINDS.RADAR_TOGGLE_SWEEP)} className="w-full h-[1.875rem] text-xs font-bold">◐</HudChamferButton>
 			</div>
 		</div>
 	</HudChamferFrame>

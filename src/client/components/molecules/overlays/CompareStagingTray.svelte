@@ -37,6 +37,10 @@
 	let added = $derived(deltas.filter(([, d]) => d.status === COMPARE_STATUS.ADDED).length);
 	let modified = $derived(deltas.filter(([, d]) => d.status === COMPARE_STATUS.MODIFIED).length);
 	let removed = $derived(deltas.filter(([, d]) => d.status === COMPARE_STATUS.REMOVED).length);
+	function clearCompareBaseline(): void {
+		hudWire.dispatchIntent({ intentKind: HUD_INTENT_KINDS.COMPARE_CLEAR_BASELINE, sourceZone: HUD_ZONES.BOTTOM_CENTER });
+		onClearBaseline();
+	}
 </script>
 
 {#if diffReport}
@@ -73,7 +77,7 @@
 				<HudChamferButton chamferCorner={CHAMFER_CORNERS.TOP_RIGHT} cutPx={5} variant="accent" testid="compare-drawer-toggle" onclick={() => hudWire.dispatchIntent({ intentKind: HUD_INTENT_KINDS.COMPARE_TOGGLE_DRAWER, sourceZone: HUD_ZONES.BOTTOM_CENTER })} className="px-2 py-0.5 text-[10px]">
 					{hudWire.compareDrawerOpen ? 'Hide Diff' : 'Diff Drawer'}
 				</HudChamferButton>
-				<HudChamferButton chamferCorner={CHAMFER_CORNERS.BOTTOM_LEFT} cutPx={5} variant="danger" testid="compare-clear-btn" onclick={() => { hudWire.compareDrawerOpen = false; onClearBaseline(); }} className="px-2 py-0.5 text-[10px]">
+				<HudChamferButton chamferCorner={CHAMFER_CORNERS.BOTTOM_LEFT} cutPx={5} variant="danger" testid="compare-clear-btn" onclick={clearCompareBaseline} className="px-2 py-0.5 text-[10px]">
 					Clear
 				</HudChamferButton>
 			</div>

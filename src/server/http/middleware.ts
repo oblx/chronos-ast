@@ -7,7 +7,7 @@ import { HTTP_STATUS } from '@config/constants';
 import { CAPABILITY_BITS, HTTP_SECURITY_CONSTANTS, PRINCIPAL_KINDS, ROLE_IDS } from '@config/security.constants';
 import type { ChronosDatabaseHandle } from '@lib/db/sqlite/client/connection';
 import { sessions, users } from '@lib/db/sqlite/schema/tables';
-import { sanitizeTelemetryPayload } from '@lib/utils/log.sanitizer';
+import { parseSafeJson, sanitizeTelemetryPayload } from '@lib/utils/log.sanitizer';
 import { pseudonymizeClientIp } from '@core/security/privacy.guard';
 import { computeEffectiveMask, hasCapability, isSystemLockdownActive, missingCapabilities } from '@core/security/rbac.bitmask';
 import { verifyAccessToken, verifyCsrfHeader } from '@core/security/session.engine';
@@ -102,6 +102,9 @@ export async function authorizeRequest(
 }
 
 export const requireCapability = authorizeRequest;
+export async function runCapabilityRoute(principal: RequestPrincipal, method: string, headers: Record<string, string>, mask: number, requireCsrf: boolean, handler: () => Promise<ApiResponseEnvelope> | ApiResponseEnvelope): Promise<ApiResponseEnvelope> {
+	return (await authorizeRequest(principal, method, headers, mask, requireCsrf)) ?? await handler();
+}
 
 export function okResponse(payload: unknown, setCookies?: readonly string[]): ApiResponseEnvelope {
 	return setCookies ? { status: HTTP_STATUS.OK, payload, setCookies } : { status: HTTP_STATUS.OK, payload };
@@ -113,6 +116,12 @@ export function unauthorizedResponse(error: string, setCookies?: readonly string
 }
 export function sanitizedErrorResponse(status: number, err: unknown): ApiResponseEnvelope {
 	return { status, payload: { error: sanitizeTelemetryPayload(err instanceof Error ? err.message : String(err)) } };
+}
+export function parseBodyObject<T extends Record<string, unknown> = Record<string, unknown>>(bodyText?: string): T {
+	return bodyText ? parseSafeJson<T>(bodyText) : ({} as T);
+}
+export function resolveCallerUid(handle: ChronosDatabaseHandle, principal: RequestPrincipal, fallback = 0): number {
+	return handle.db.select({ uid: users.uid }).from(users).where(eq(users.id, principal.userId)).get()?.uid ?? (Number(principal.userId) || fallback);
 }
 
 interface RateBucket { failures: number; windowStartMs: number; blockedUntilMs: number; }

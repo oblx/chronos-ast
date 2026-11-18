@@ -1,14 +1,15 @@
 <!--
 	@author Oblx <code@oblx.dev>
-	@description Chronos v2.6.0 Universal Interactive Camera Stage: ResizeObserver auto-fit to Safe Corridor, pan/zoom, pinch, double-click fit & context menu.
+	@description Chronos v1.9.6 Universal Interactive Camera Stage: 4-corner CHAMFER_OCTAGON hull frame, ResizeObserver auto-fit to Safe Corridor, pan/zoom & pinch.
 -->
 <script lang="ts">
 	import { onMount, type Snippet } from 'svelte';
-	import { DOCK_PLACEMENT_MODES, EDGE_DRAWER_MODES, HUD_ZONE_VISIBILITY, HUD_ZONES, resolveHudBreakpoint } from '@config/hud.tokens';
+	import { DOCK_PLACEMENT_MODES, EDGE_DRAWER_MODES, HULL_PROFILES, HUD_ZONE_VISIBILITY, HUD_ZONES, ZONE_CORNER_TUPLES, resolveHudBreakpoint } from '@config/hud.tokens';
 	import { HUD_INTENT_KINDS } from '@config/hud/hud.intents';
 	import { hudWire } from '@client/state/hud.wire.svelte';
 	import { securityWire } from '@client/state/security.wire.svelte';
 	import { createViewportCameraController, type DrawerSafeOffsets, type ViewportCameraController } from '@client/state/viewport.camera.svelte';
+	import HudChamferFrame from '@client/components/atoms/HudChamferFrame.svelte';
 
 	export type InteractiveStageCamera = ViewportCameraController;
 
@@ -97,24 +98,36 @@
 	$effect(() => { onCameraChange?.({ panX: cam.panX, panY: cam.panY, zoomScale: cam.zoomScale }); });
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<div
-	bind:this={stageEl}
-	role="application"
-	aria-label={ariaLabel}
-	onwheel={handleStageWheel}
-	onpointerdown={cam.handlePointerDown}
-	onpointermove={cam.handlePointerMove}
-	onpointerup={cam.handlePointerUp}
-	onpointercancel={cam.handlePointerUp}
-	ontouchstart={cam.handleTouchStart}
-	ontouchmove={cam.handleTouchMove}
-	ontouchend={cam.handleTouchEnd}
-	oncontextmenu={cam.handleContextMenu}
-	ondblclick={fitNow}
-	class="relative w-full h-full overflow-hidden cursor-grab active:cursor-grabbing touch-none select-none"
+<HudChamferFrame
+	profile={HULL_PROFILES.CHAMFER_OCTAGON}
+	corners={ZONE_CORNER_TUPLES.PERIMETER_CHAMFER}
+	chamferPx={12}
+	chevrons={false}
+	fillColor="transparent"
+	strokeColor="var(--hud-border)"
+	testid="interactive-canvas-chamfer-frame"
+	className="relative w-full h-full overflow-hidden"
+	contentClassName="relative w-full h-full overflow-hidden"
 >
-	<div style={`width: ${boundsWidth}px; height: ${boundsHeight}px; transform-origin: 0 0; transform: translate3d(${cam.panX}px, ${cam.panY}px, 0) scale(${cam.zoomScale});`} class="transition-transform duration-75">
-		{@render children({ cam })}
+	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+	<div
+		bind:this={stageEl}
+		role="application"
+		aria-label={ariaLabel}
+		onwheel={handleStageWheel}
+		onpointerdown={cam.handlePointerDown}
+		onpointermove={cam.handlePointerMove}
+		onpointerup={cam.handlePointerUp}
+		onpointercancel={cam.handlePointerUp}
+		ontouchstart={cam.handleTouchStart}
+		ontouchmove={cam.handleTouchMove}
+		ontouchend={cam.handleTouchEnd}
+		oncontextmenu={cam.handleContextMenu}
+		ondblclick={fitNow}
+		class="relative w-full h-full overflow-hidden cursor-grab active:cursor-grabbing touch-none select-none"
+	>
+		<div style={`width: ${boundsWidth}px; height: ${boundsHeight}px; transform-origin: 0 0; transform: translate3d(${cam.panX}px, ${cam.panY}px, 0) scale(${cam.zoomScale});`} class="transition-transform duration-75">
+			{@render children({ cam })}
+		</div>
 	</div>
-</div>
+</HudChamferFrame>

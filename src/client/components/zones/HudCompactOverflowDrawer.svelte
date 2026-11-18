@@ -38,6 +38,10 @@
 		hudWire.selectView(item.view);
 		hudWire.toggleCompactMenu(false);
 	}
+	function handleReindexClick(): void {
+		hudWire.toggleCompactMenu(false);
+		void onReindexWorkspace?.();
+	}
 </script>
 
 {#if hudWire.compactMenuOpen}
@@ -60,7 +64,7 @@
 						<HudChamferButton chamferCorner={CHAMFER_CORNERS.DIAGONAL_PAIR} cutPx={5} onclick={() => hudWire.openModal(HUD_MODALS.STATIONS_LAUNCHER)} className="px-2.5 py-1 text-[11px]">Stations</HudChamferButton>
 						<HudChamferButton chamferCorner={CHAMFER_CORNERS.DIAGONAL_PAIR} cutPx={5} onclick={() => hudWire.openModal(HUD_MODALS.SETTINGS)} className="px-2.5 py-1 text-[11px]">Settings</HudChamferButton>
 						{#if canIndexLocal && onReindexWorkspace}
-							<HudChamferButton chamferCorner={CHAMFER_CORNERS.TOP_RIGHT} cutPx={5} variant="nominal" onclick={() => { hudWire.toggleCompactMenu(false); void onReindexWorkspace(); }} className="px-2.5 py-1 text-[11px]">Re-Index</HudChamferButton>
+							<HudChamferButton chamferCorner={CHAMFER_CORNERS.TOP_RIGHT} cutPx={5} variant="nominal" onclick={handleReindexClick} className="px-2.5 py-1 text-[11px]">Re-Index</HudChamferButton>
 						{/if}
 					{/if}
 				</div>

@@ -8,7 +8,6 @@ import { API_ROUTES, EXPORT_FORMATS, WORKFLOW_WEBHOOK_EVENTS, WORKSPACE_DEFAULTS
 import { CAPABILITY_BITS } from '@config/security.constants';
 import type { ChronosDatabaseHandle } from '@lib/db/sqlite/client/connection';
 import { createChronosAiRegistry } from '@lib/ai/provider/client/ai.bridge';
-import { parseSafeJson } from '@lib/utils/log.sanitizer';
 import type { WorkspaceSnapshot } from '@core/metamodel/workspace.indexer';
 import type { SourceFileUnit } from '@core/metamodel/workspace.sources';
 import { createPresetWorkspace, createWorkspaceFromSources, deleteWorkspaceRecord, exportWorkspaceRecord, importWorkspaceRecord, saveWorkspaceRecord } from '@core/metamodel/workspace/manager/workspace.manager';
@@ -17,7 +16,7 @@ import { exportCytoscapeGraph } from '@plugins/exporters/cytoscape.exporter';
 import { exportMemgraphCypherBatch, syncAndAnalyzeMemgraph } from '@plugins/exporters/memgraph.exporter';
 import { exportSonarQubeReport } from '@plugins/exporters/sonarqube.exporter';
 import { dispatchWorkflowWebhookAsync } from '@plugins/exporters/webhook.bridge';
-import { badRequestResponse, okResponse, requireCapability, type ApiResponseEnvelope, type RequestPrincipal } from './middleware';
+import { badRequestResponse, okResponse, parseBodyObject, requireCapability, type ApiResponseEnvelope, type RequestPrincipal } from './middleware';
 
 export function loadLiveDocsMarkdownMap(dir = 'docs'): Readonly<Record<string, string>> {
 	const out: Record<string, string> = {};
@@ -57,7 +56,7 @@ async function handleRemoteUrlImport(handle: ChronosDatabaseHandle, body: Record
 export async function handleWorkspaceRoute(
 	handle: ChronosDatabaseHandle, fallbackSnap: WorkspaceSnapshot, bodyText: string | undefined, method: string, headers: Record<string, string>, principal: RequestPrincipal
 ): Promise<ApiResponseEnvelope> {
-	const body = bodyText ? parseSafeJson<Record<string, unknown>>(bodyText) : {};
+	const body = parseBodyObject(bodyText);
 	const action = String(body.operation ?? WORKSPACE_OPERATIONS.OPEN);
 	const denied = await requireCapability(principal, method, headers, requiredWorkspaceCapability(action));
 	if (denied) return denied;
@@ -106,7 +105,7 @@ export async function handleQueryAndExportRoutes(
 	if (urlPath.startsWith(API_ROUTES.GRAPH_QUERY) && method === 'POST') {
 		const denied = await requireCapability(principal, method, headers, CAPABILITY_BITS.METAMODEL_QUERY);
 		if (denied) return denied;
-		const body = bodyText ? parseSafeJson<Record<string, unknown>>(bodyText) : {};
+		const body = parseBodyObject(bodyText);
 		const focalId = Number(body.focalEntityId ?? snap.nodes[0]?.id ?? WORKSPACE_DEFAULTS.FALLBACK_ENTITY_ID);
 		return okResponse(await syncAndAnalyzeMemgraph(focalId, snap.nodes, snap.edges, body.maxHops ? Number(body.maxHops) : undefined));
 	}

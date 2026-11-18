@@ -3,13 +3,13 @@
  * @description Chronos Reactive Security & Sync Wire: Remember Me persistence, 3-Path Boot Decision Tree, Chronos u32 RBAC & Vault.
  */
 import { API_ROUTES } from '@config/constants';
-import { PRINCIPAL_KINDS, ROLE_IDS, ROLE_MASKS, SEEDED_OPERATOR_CONFIG, SYNC_POSTURES } from '@config/security.constants';
+import { CAPABILITY_BITS, PRINCIPAL_KINDS, ROLE_IDS, ROLE_MASKS, SEEDED_OPERATOR_CONFIG, SYNC_POSTURES } from '@config/security.constants';
 import { getQueuedSyncOps, type HlcTimestamp } from '@core/sync/delta.sync';
 import { clearPersistedHudSession, restoreVerifiedSession, hasSavedSessionIndicator, type GuestDeviceIdentity } from '@core/sync/session.restorer';
 import { hudWire } from './hud.wire.svelte';
-import { enqueueSignedAnnotationDelta, pushGuestWorkspacePromotion, pushQueuedSyncOps, resolveOfflineDemoUser, saveSignedHudIdentity } from './security.sync';
+import { enqueueSignedAnnotationDelta, fetchVaultSecretList, mintScopedPatToken, pushGuestWorkspacePromotion, pushQueuedSyncOps, resolveOfflineDemoUser, saveSignedHudIdentity } from './security.sync';
 
-export interface MaskedVaultSecretItem { readonly id: string; readonly provider: string; readonly label: string; readonly maskedHint: string; readonly keyVersion: number; readonly updatedAt: number; }
+export interface MaskedVaultSecretItem { readonly secretId: string; readonly providerKind: string; readonly label: string; readonly lastFourChars: string; readonly keyVersion: number; readonly rotatedAt: number; }
 export interface ActiveSessionDescriptor { readonly sid: string; readonly familyId: string; readonly scopedMask: number; readonly generation: number; readonly expiresAt: number; }
 
 class ChronosSecurityWire {
@@ -17,7 +17,7 @@ class ChronosSecurityWire {
 	principalKind = $state<string>(PRINCIPAL_KINDS.GUEST); roleId = $state<string>(ROLE_IDS.GUEST);
 	effectiveMask = $state<number>(ROLE_MASKS.ROLE_GUEST); syncPosture = $state<string>(SYNC_POSTURES.OFFLINE_VERIFIED);
 	lockdownActive = $state<boolean>(false); devMode = $state<boolean>(false); rememberMe = $state<boolean>(true);
-	accessToken = $state<string>(''); csrfToken = $state<string>('');
+	accessToken = $state<string>(''); csrfToken = $state<string>(''); lastMintedPat = $state<string>('');
 	sessions = $state<readonly ActiveSessionDescriptor[]>([]); vaultSecrets = $state<readonly MaskedVaultSecretItem[]>([]);
 	queuedOpsCount = $state<number>(0); conflictEntities = $state<readonly string[]>([]);
 	auditChainValid = $state<boolean>(true); auditRowCount = $state<number>(0);
@@ -39,7 +39,7 @@ class ChronosSecurityWire {
 		const fallbackId = guestName ?? (this.guestIdentity?.guestId ?? 'guest');
 		this.userId = fallbackId; this.uid = 0; this.username = fallbackId;
 		this.principalKind = PRINCIPAL_KINDS.GUEST; this.roleId = ROLE_IDS.GUEST;
-		this.effectiveMask = ROLE_MASKS.ROLE_GUEST; this.accessToken = ''; this.csrfToken = '';
+		this.effectiveMask = ROLE_MASKS.ROLE_GUEST; this.accessToken = ''; this.csrfToken = ''; this.lastMintedPat = '';
 		this.sessions = []; this.vaultSecrets = []; this.requiredNodePrompt = '';
 	}
 
@@ -114,9 +114,10 @@ class ChronosSecurityWire {
 	}
 
 	async promoteGuest(workspaceIds: readonly string[]): Promise<number> { try { const res = await pushGuestWorkspacePromotion(this.guestIdentity, this.buildHeaders(), workspaceIds); this.guestIdentity = res.identity; if (res.error) this.lastError = res.error; return res.promotedCount; } catch { return 0; } }
-	async storeVaultSecret(provider: string, label: string, plaintextSecret: string): Promise<boolean> {
+	async mintPat(label: string, scopedBitmask: number): Promise<boolean> { this.lastError = ''; try { const r = await mintScopedPatToken(this.buildHeaders(), label, scopedBitmask); if (r.error || !r.rawToken) { this.lastError = r.error ?? 'PAT mint failed'; return false; } this.lastMintedPat = r.rawToken; return true; } catch { this.lastError = 'PAT mint failed'; return false; } }
+	async storeVaultSecret(label: string, providerKind: string, plaintextSecret: string): Promise<boolean> {
 		this.lastError = '';
-		try { const res = await fetch(API_ROUTES.VAULT_SECRETS, { method: 'POST', headers: this.buildHeaders(), body: JSON.stringify({ provider, label, plaintextSecret }) }); const data = await res.json(); if (!res.ok) { this.lastError = data.error ?? 'Vault store failed'; return false; } await this.refreshSecurityStatus(); return true; } catch { this.lastError = 'Vault store failed'; return false; }
+		try { const res = await fetch(API_ROUTES.VAULT_SECRETS, { method: 'POST', headers: this.buildHeaders(), body: JSON.stringify({ label, providerKind, plaintextSecret }) }); const data = await res.json(); if (!res.ok) { this.lastError = data.error ?? 'Vault store failed'; return false; } await this.refreshSecurityStatus(); return true; } catch { this.lastError = 'Vault store failed'; return false; }
 	}
 	async deleteVaultSecret(secretId: string): Promise<boolean> { try { const res = await fetch(`${API_ROUTES.VAULT_SECRETS}?id=${encodeURIComponent(secretId)}`, { method: 'DELETE', headers: this.buildHeaders() }); if (!res.ok) return false; await this.refreshSecurityStatus(); return true; } catch { return false; } }
 	async enqueueAnnotationOp(entityQualifiedName: string, payload: Record<string, unknown>): Promise<void> { const res = await enqueueSignedAnnotationDelta(this.hlc, this.userId, entityQualifiedName, payload); this.hlc = res.nextHlc; this.queuedOpsCount = res.queuedOpsCount; }
@@ -128,8 +129,8 @@ class ChronosSecurityWire {
 			const data = await res.json(); this.lockdownActive = Boolean(data.lockdownActive);
 			if (data.devMode !== undefined) this.devMode = Boolean(data.devMode);
 			if (Array.isArray(data.sessions)) this.sessions = data.sessions;
-			if (Array.isArray(data.vaultSecrets)) this.vaultSecrets = data.vaultSecrets;
 			if (data.auditChain) { this.auditChainValid = Boolean(data.auditChain.valid); this.auditRowCount = Number(data.auditChain.checkedRows ?? 0); }
+			if (this.can(CAPABILITY_BITS.VAULT_SECRET_USE)) { const list = await fetchVaultSecretList<MaskedVaultSecretItem>(this.buildHeaders()); if (list) this.vaultSecrets = list; }
 		} catch {}
 	}
 	private async applyAuthPayload(data: Record<string, unknown>): Promise<void> {

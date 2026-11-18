@@ -5,26 +5,17 @@
 import { existsSync, mkdirSync, mkdtempSync, renameSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { API_ROUTES, HTTP_STATUS, WORKSPACE_DEFAULTS, WS_CONFIG } from '@config/constants';
+import { WORKSPACE_DEFAULTS, WS_CONFIG } from '@config/constants';
 import { bootstrapDefaultWorkspace, type WorkspaceSnapshot } from '@core/metamodel/workspace.indexer';
 import { saveWorkspaceRecord } from '@core/metamodel/workspace/manager/workspace.manager';
 import { ensureSeededOperatorAccount } from '@lib/db/seed.operator';
 import { closeChronosDb, createChronosDb, type ChronosDatabaseHandle } from '@lib/db/client';
-import { parseSafeJson } from '@lib/utils/log.sanitizer';
-import { sanitizeInboundPayload, sanitizeOutboundForPrincipal } from '@plugins/sanitizers/form.sanitizer';
-import { buildSecurityResponseHeaders, normalizeHeaders, okResponse, resolveRequestPrincipal, type ApiResponseEnvelope, type RequestPrincipal } from '@server/http/middleware';
+import { dispatchChronosDomainRoutes, finalizeEnvelopeForPrincipal, sanitizeInboundBody } from '@server/http/domain.dispatch';
+import { buildSecurityResponseHeaders, normalizeHeaders, resolveRequestPrincipal, type ApiResponseEnvelope, type RequestPrincipal } from '@server/http/middleware';
 import { serverDagKernel } from '@server/http/server.kernel';
-import { handleForensicMcpHttp, handleMcpManifestRoute, handleTwinMcpHttp, type McpRuntimeContext } from '@server/mcp';
-import { handleAuthSubRoutes } from '@server/routes/auth.routes';
-import { handleCollabRoutes } from '@server/routes/collab.routes';
-import { handleGamificationRoutes } from '@server/routes/gamification.routes';
-import { handlePrivacyRoutes } from '@server/routes/privacy.routes';
-import { ensureDefaultProjectsSeeded, handleProjectAndAiRoutes } from '@server/routes/project.routes';
-import { handleSecurityRoutes } from '@server/routes/security.routes';
-import { ensureCommunityThemesSeeded, handleThemeAndPreferenceRoutes } from '@server/routes/theme.routes';
-import { handleVaultAndSyncRoutes } from '@server/http/vault_sync.routes';
-import { loadLiveDocsMarkdownMap, handleWorkspaceRoute } from '@server/http/workspace.routes';
-import { compileHelpBookFromDocs } from '@core/metamodel/help.engine';
+import { type McpRuntimeContext } from '@server/mcp';
+import { ensureDefaultProjectsSeeded } from '@server/routes/project.routes';
+import { ensureCommunityThemesSeeded } from '@server/routes/theme.routes';
 import { setTwinBridgeDbHandle } from '@server/ws/twin.bridge';
 import { handleWsClientFrame, joinWsClient, leaveWsClient, resetWsHub, type WsInboundFrame } from '@server/ws/ws.hub';
 
@@ -44,29 +35,14 @@ async function dispatchEphemeralApi(
 ): Promise<ApiResponseEnvelope> {
 	const headers = normalizeHeaders(rawHeaders);
 	const principal: RequestPrincipal = await resolveRequestPrincipal(handle, headers);
-	const safeBody = bodyText ? JSON.stringify(sanitizeInboundPayload(parseSafeJson<unknown>(bodyText))) : undefined;
+	const safeBody = sanitizeInboundBody(bodyText);
 	const coreSnap = snaps.get('chronos-core')!;
 	return serverDagKernel.execute(urlPath, method, principal, safeBody ?? '', async () => {
-		const authParsed = safeBody ? parseSafeJson<Record<string, unknown>>(safeBody) : {};
-		const reqProj = urlPath.startsWith(API_ROUTES.SNAPSHOT) ? new URL(`http://chronos${urlPath}`).searchParams.get('project') : null;
-		const res: ApiResponseEnvelope =
-			(await serverDagKernel.handleWireObserveRoute(urlPath, method, headers, principal))
-			?? (urlPath.startsWith(API_ROUTES.MCP_MANIFEST) && method === 'GET' ? handleMcpManifestRoute() : null)
-			?? (urlPath.startsWith(API_ROUTES.MCP_TWIN) && method === 'POST' ? await handleTwinMcpHttp(mcpCtx, safeBody, principal) : null)
-			?? (urlPath.startsWith(API_ROUTES.MCP_FORENSIC) && method === 'POST' ? await handleForensicMcpHttp(mcpCtx, safeBody, principal) : null)
-			?? (urlPath.startsWith('/api/auth/') ? await handleAuthSubRoutes(handle, urlPath, method, authParsed, headers, principal) : null)
-			?? (await handleSecurityRoutes(handle, urlPath, method, safeBody, headers, principal))
-			?? (await handlePrivacyRoutes(handle, urlPath, method, principal))
-			?? (await handleVaultAndSyncRoutes(handle, urlPath, method, safeBody, headers, principal))
-			?? (await handleCollabRoutes(handle, urlPath, method, safeBody, principal))
-			?? (await handleThemeAndPreferenceRoutes(handle, urlPath, method, safeBody, headers, principal))
-			?? (await handleProjectAndAiRoutes(handle, coreSnap, urlPath, method, safeBody, headers, principal))
-			?? (await handleGamificationRoutes(handle, urlPath, method, safeBody, headers, principal))
-			?? (urlPath.startsWith(API_ROUTES.HELP_BOOK) && method === 'GET' ? okResponse({ chapters: compileHelpBookFromDocs(loadLiveDocsMarkdownMap()) }) : null)
-			?? (urlPath.startsWith(API_ROUTES.SNAPSHOT) && method === 'GET' ? okResponse((reqProj ? snaps.get(reqProj) : undefined) ?? coreSnap) : null)
-			?? (urlPath.startsWith(API_ROUTES.WORKSPACES) && method === 'POST' ? await handleWorkspaceRoute(handle, coreSnap, safeBody, method, headers, principal) : null)
-			?? { status: HTTP_STATUS.NOT_FOUND, payload: { error: 'Unknown QA API route' } };
-		return { ...res, payload: sanitizeOutboundForPrincipal(res.payload, principal.effectiveMask, principal.roleId) };
+		const res = await dispatchChronosDomainRoutes({
+			handle, snapshot: coreSnap, getProjectSnapshot: (slug) => (slug ? snaps.get(slug) : undefined),
+			mcpCtx, urlPath, method, safeBody, headers, principal,
+		});
+		return finalizeEnvelopeForPrincipal(res, principal);
 	});
 }
 

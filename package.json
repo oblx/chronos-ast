@@ -1,19 +1,20 @@
 {
 	"name": "chronos-analysis-engine",
-	"version": "1.9.5",
+	"version": "1.9.7",
 	"private": true,
 	"author": "Oblx <code@oblx.dev>",
 	"license": "MIT",
 	"type": "module",
 	"scripts": {
 		"dev": "DEVMODE=false bun --bun vite --port=3000 --host=0.0.0.0",
-		"build": "bun --bun vite build",
+		"build:tome": "bun run src/workers/cli/compile_tome_ssg.ts",
+		"build": "bun run build:tome && bun --bun vite build",
 		"start": "bun run server.ts",
 		"preview": "bun --bun vite preview --port=3000 --host=0.0.0.0",
 		"test": "bun test",
 		"bench": "bun run benches/parser.bench.ts && bun run benches/graph_traversal.bench.ts && bun run benches/metric_reduction.bench.ts",
 		"lint": "bun x tsc --noEmit",
-		"verify": "bun run lint && bun test && bun run build",
+		"verify": "bun run lint && bun run build && bun test",
 		"qa:report": "bun run src/workers/qa/qa.runner.ts",
 		"mcp:token": "bun run src/workers/cli/mint_mcp_token.ts",
 		"clean": "mkdir -p .trash && mv -f dist .svelte-kit .trash/ 2>/dev/null || true"

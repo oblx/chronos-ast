@@ -37,7 +37,7 @@
 		canScrollRight = maxScroll - trackEl.scrollLeft > 4;
 	}
 
-	function stepScroll(direction: -1 | 1): void {
+	export function stepScroll(direction: -1 | 1): void {
 		if (!trackEl) return;
 		const delta = gridMode ? trackEl.clientWidth + 16 : stepPx;
 		trackEl.scrollBy({ left: direction * delta, behavior: 'smooth' });
@@ -91,7 +91,7 @@
 
 <div bind:this={wrapEl} data-testid={testid} class={`relative flex-1 min-h-0 flex items-center gap-2 ${className}`}>
 	{#if showSteppers && (hasOverflow || canScrollLeft || canScrollRight)}
-		<HudChamferButton chamferCorner={CHAMFER_PROFILES.LEFT_END_CAP} cutPx={6} variant={canScrollLeft ? 'accent' : 'default'} disabled={!canScrollLeft} testid={`${testid}-prev`} tip="Scroll Left" ariaLabel="Scroll Deck Left" onclick={() => stepScroll(-1)} className="w-8 h-10 shrink-0 font-mono text-xs font-bold shadow-lg">◄</HudChamferButton>
+		<HudChamferButton chamferCorner={CHAMFER_PROFILES.LEFT_END_CAP} cutPx={6} variant={canScrollLeft ? 'accent' : 'default'} disabled={!canScrollLeft} testid={`${testid}-prev`} tip="Scroll Left [←]" ariaLabel="Scroll Deck Left" onclick={() => stepScroll(-1)} className="w-8 h-10 shrink-0 font-mono text-xs font-bold shadow-lg">◄</HudChamferButton>
 	{/if}
 	<div
 		bind:this={trackEl}
@@ -109,6 +109,6 @@
 		{@render children()}
 	</div>
 	{#if showSteppers && (hasOverflow || canScrollLeft || canScrollRight)}
-		<HudChamferButton chamferCorner={CHAMFER_PROFILES.RIGHT_END_CAP} cutPx={6} variant={canScrollRight ? 'accent' : 'default'} disabled={!canScrollRight} testid={`${testid}-next`} tip="Scroll Right" ariaLabel="Scroll Deck Right" onclick={() => stepScroll(1)} className="w-8 h-10 shrink-0 font-mono text-xs font-bold shadow-lg">►</HudChamferButton>
+		<HudChamferButton chamferCorner={CHAMFER_PROFILES.RIGHT_END_CAP} cutPx={6} variant={canScrollRight ? 'accent' : 'default'} disabled={!canScrollRight} testid={`${testid}-next`} tip="Scroll Right [→]" ariaLabel="Scroll Deck Right" onclick={() => stepScroll(1)} className="w-8 h-10 shrink-0 font-mono text-xs font-bold shadow-lg">►</HudChamferButton>
 	{/if}
 </div>

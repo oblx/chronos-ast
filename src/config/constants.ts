@@ -4,7 +4,7 @@
  */
 
 export const APP_METADATA = {
-	NAME: 'Chronos', VERSION: '1.9.5', LICENSE: 'MIT', AUTHOR: 'Oblx <code@oblx.dev>',
+	NAME: 'Chronos', VERSION: '1.9.7', LICENSE: 'MIT', AUTHOR: 'Oblx <code@oblx.dev>',
 	ENGINE_LABEL: 'BUN_NATIVE_SQLITE_INDEXEDDB_MEMGRAPH_MCP_WS100',
 } as const;
 
@@ -81,7 +81,7 @@ export type WorkerChannel = (typeof PARSER_WORKER_CHANNELS)[keyof typeof PARSER_
 export const API_ROUTES = {
 	SNAPSHOT: '/api/metamodel/snapshot', ENTITY_DETAIL: '/api/metamodel/entity', ANALYZE_SOURCE: '/api/metamodel/analyze',
 	REINDEX_WORKSPACE: '/api/metamodel/reindex', EXPORT_REPORT: '/api/metamodel/export', WORKSPACES: '/api/metamodel/workspaces',
-	PROJECTS: '/api/projects', INGEST_GIT: '/api/projects/ingest-git', GIT_PR: '/api/projects/git-pr',
+	PROJECTS: '/api/projects', INGEST_UNIFIED: '/api/projects/ingest', INGEST_GIT: '/api/projects/ingest-git', GIT_PR: '/api/projects/git-pr',
 	THEMES: '/api/themes', THEME_FAVORITE: '/api/themes/favorite', USER_PREFERENCES: '/api/preferences',
 	AI_CHAT: '/api/metamodel/ai-chat',
 	GRAPH_QUERY: '/api/metamodel/graph-query', HELP_BOOK: '/api/metamodel/help', AUTH_LOGIN: '/api/auth/login',

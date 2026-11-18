@@ -7,12 +7,18 @@ import { PRINCIPAL_POSTURE_META, SEEDED_OPERATOR_CONFIG } from './security.const
 export { HUD_THEME_IDS, HUD_THEME_PRESETS, PRINCIPAL_POSTURE_META, SEEDED_OPERATOR_CONFIG, type HudThemeId, type HudThemePreset };
 export {
 	HUD_ELEVATION_TOKENS, HUD_MOTION_TOKENS, HUD_GLYPHS, SURFACE_TARGETS, SURFACE_PATTERNS, SURFACE_PATTERN_IDS,
-	HULL_PROFILES, HULL_TOKENS, SUBSTRATE_DEFAULTS, FUI_DEPTH_CONSTANTS,
+	HULL_PROFILES, HULL_TOKENS, SUBSTRATE_DEFAULTS, FUI_DEPTH_CONSTANTS, CORNER_STYLES, ZONE_CORNER_TUPLES, FONT_SCALE_OPTIONS,
+	CHAMFER_CORNERS, CHAMFER_PROFILES, mirrorCornerTuple,
 	type HullProfile, type SubstrateConfig, type SurfaceTarget, type SurfacePatternId, type SurfacePatternSpec,
+	type CornerVertex, type CornerTuple, type FontScalePct, type ChamferCornerMode, type ChamferCorner, type ChamferProfile,
 } from './hud/hud.surfaces';
+export {
+	resolveLegacyCornerTuple, resolveEffectiveCornerTuple, resolveChamferCutPx,
+	buildCornerPolygonPoints, buildCornerCarets, buildHullClipPath, buildEntityCartridgePolygons,
+} from './hud/hud.geometry';
+export { HUD_INTENT_KINDS, type HudIntent, type HudIntentKind } from './hud/hud.intents';
 export const HUD_THEMES = HUD_THEME_PRESETS;
 export const AUTH_LOBBY_TITLE = 'Chronos Lobby' as const;
-
 export const HUD_BREAKPOINTS = {
 	PHONE: { id: 'PHONE', minWidthPx: 0, maxWidthPx: 767, expandedTrackPx: 360, edgeTrackExpandedPx: 360, collapsedRailPx: 44, railCollapsedPx: 44, cssTrackVar: '100vw', maxVisibleProjectTabs: 2, studioCorridorMaxPx: 767 },
 	TABLET: { id: 'TABLET', minWidthPx: 768, maxWidthPx: 1199, expandedTrackPx: 248, edgeTrackExpandedPx: 248, collapsedRailPx: 48, railCollapsedPx: 48, cssTrackVar: '248px', maxVisibleProjectTabs: 3, studioCorridorMaxPx: 1199 },
@@ -34,17 +40,6 @@ export const DOCK_PLACEMENT_MODES = { DOCKED_RAIL: 'DOCKED_RAIL', FLOATING_PANEL
 export type DockPlacementMode = (typeof DOCK_PLACEMENT_MODES)[keyof typeof DOCK_PLACEMENT_MODES];
 export const EDGE_DRAWER_MODES = { OVERLAY_HOVER: 'OVERLAY_HOVER', DOCKED_RESIZE: 'DOCKED_RESIZE' } as const;
 export type EdgeDrawerMode = (typeof EDGE_DRAWER_MODES)[keyof typeof EDGE_DRAWER_MODES];
-export const CHAMFER_CORNERS = {
-	CORNER_TOP_LEFT: 'CORNER_TOP_LEFT', CORNER_BOTTOM_LEFT: 'CORNER_BOTTOM_LEFT',
-	CORNER_TOP_RIGHT: 'CORNER_TOP_RIGHT', CORNER_BOTTOM_RIGHT: 'CORNER_BOTTOM_RIGHT',
-	RIGHT_END_CAP: 'RIGHT_END_CAP', LEFT_END_CAP: 'LEFT_END_CAP', INTERIOR_CHAMFER: 'INTERIOR_CHAMFER',
-	TOP_RIGHT: 'CORNER_TOP_RIGHT', BOTTOM_LEFT: 'CORNER_BOTTOM_LEFT', DIAGONAL_PAIR: 'INTERIOR_CHAMFER',
-	WING_SLOT: 'WING_SLOT', OCTAGON_PILL: 'OCTAGON_PILL', CHAMFER_OCTAGON: 'CHAMFER_OCTAGON', TOP_CAP_CHAMFER: 'TOP_CAP_CHAMFER', BOTTOM_CAP_CHAMFER: 'BOTTOM_CAP_CHAMFER',
-} as const;
-export const CHAMFER_PROFILES = CHAMFER_CORNERS;
-export type ChamferCornerMode = (typeof CHAMFER_CORNERS)[keyof typeof CHAMFER_CORNERS];
-export type ChamferCorner = ChamferCornerMode;
-export type ChamferProfile = ChamferCornerMode;
 export const COLLAB_CURSOR_PALETTE = ['#00E5FF', '#F59E0B', '#10B981', '#EC4899', '#A855F7', '#3B82F6', '#EF4444', '#14B8A6'] as const;
 
 export const DOCK_FLOAT_TOKENS = {

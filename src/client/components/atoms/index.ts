@@ -10,3 +10,4 @@ export { default as HudChamferButton } from './HudChamferButton.svelte';
 export { default as HudCyberTooltip } from './HudCyberTooltip.svelte';
 export { default as HudEntityCartridge } from './HudEntityCartridge.svelte';
 export { default as HudMathFormula } from './HudMathFormula.svelte';
+export { default as HudIcon } from './HudIcon.svelte';

@@ -23,7 +23,7 @@
 	<div class="relative min-w-[290px] lg:min-w-0 lg:flex-1 snap-start h-full">
 		<HudChamferFrame profile={HULL_PROFILES.CHAMFER_OCTAGON} chevrons={true} surfacePatternId={SURFACE_PATTERN_IDS.ISOMETRIC_HEX_MESH} patternOpacity={0.22} className="h-full" contentClassName="p-5 flex flex-col justify-between gap-3">
 			<div class="flex flex-col gap-2 min-w-0">
-				<span class="text-[10.5px] font-mono font-bold tracking-wider text-[var(--hud-accent-primary)] uppercase">⚡ NEW OPERATOR BRIEFING · 30 SEC</span>
+				<span class="text-[10.5px] font-mono font-bold tracking-wider text-[var(--hud-accent-primary)] uppercase">↯ NEW OPERATOR BRIEFING · 30 SEC</span>
 				<h3 class="font-display text-lg font-bold text-[var(--hud-text)] leading-snug">Interactive HUD Tour</h3>
 				<p class="text-[12px] text-[var(--hud-muted)] leading-relaxed m-0 font-mono">Guided 5-step unfolding across all 11 tactical zones, unlocking your first Level-Up XP burst.</p>
 				<ul class="text-[11px] text-[var(--hud-text)]/85 font-mono space-y-1 pt-1">

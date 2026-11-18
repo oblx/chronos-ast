@@ -71,29 +71,29 @@
 	onMount(() => { void loadCommunityGallery(); });
 </script>
 
-<div class="border border-[var(--hud-border)] bg-[var(--hud-bg)]/55 p-2.5 mb-3">
-	<div class="flex flex-wrap items-center justify-between gap-2 mb-2 pb-1.5 border-b border-[var(--hud-border)]">
+<div class="border border-[var(--hud-border)] bg-[var(--hud-bg)]/55 p-2.5 flex flex-col gap-2 h-full min-h-0">
+	<div class="flex flex-wrap items-center justify-between gap-1.5 pb-1.5 border-b border-[var(--hud-border)] shrink-0">
 		<div class="flex items-center gap-1.5 font-mono text-[10px]">
-			<HudChamferButton chamferCorner={CHAMFER_CORNERS.TOP_RIGHT} cutPx={5} active={subTab === 'MARKETPLACE'} onclick={() => (subTab = 'MARKETPLACE')} className="px-2.5 py-1">Community Marketplace ({gallery.length})</HudChamferButton>
-			<HudChamferButton chamferCorner={CHAMFER_CORNERS.BOTTOM_LEFT} cutPx={5} active={subTab === 'STUDIO'} onclick={() => (subTab = 'STUDIO')} className="px-2.5 py-1">Theme Studio &amp; Live Tuner</HudChamferButton>
+			<HudChamferButton chamferCorner={CHAMFER_CORNERS.TOP_RIGHT} cutPx={5} active={subTab === 'MARKETPLACE'} onclick={() => (subTab = 'MARKETPLACE')} className="px-2 py-1">Gallery ({gallery.length})</HudChamferButton>
+			<HudChamferButton chamferCorner={CHAMFER_CORNERS.BOTTOM_LEFT} cutPx={5} active={subTab === 'STUDIO'} onclick={() => (subTab = 'STUDIO')} className="px-2 py-1">Studio Tuner</HudChamferButton>
 		</div>
-		{#if formError}<span role="alert" class="font-mono text-[10px] text-[var(--hud-danger)]">{formError}</span>{:else if statusBanner}<span class="font-mono text-[10px] text-[var(--hud-nominal)]">{statusBanner}</span>{/if}
+		{#if formError}<span role="alert" class="font-mono text-[10px] text-[var(--hud-danger)] truncate">{formError}</span>{:else if statusBanner}<span class="font-mono text-[10px] text-[var(--hud-nominal)] truncate">{statusBanner}</span>{/if}
 	</div>
 
 	{#if subTab === 'MARKETPLACE'}
-		<div class="flex items-center gap-1.5 mb-2 font-mono text-[10px]">
+		<div class="flex items-center gap-1 font-mono text-[10px] shrink-0">
 			{#each (['ALL', 'DARK', 'LIGHT', 'FAVORITES'] as const) as f (f)}
 				<button type="button" onclick={() => (filterMode = f)} class="px-2 py-0.5 border cursor-pointer {filterMode === f ? 'border-[var(--hud-accent-primary)] text-[var(--hud-accent-primary)] bg-[var(--hud-accent-primary)]/10' : 'border-[var(--hud-border)] text-[var(--hud-muted)]'}">{f === 'FAVORITES' ? 'Favorites ★' : f}</button>
 			{/each}
 		</div>
-		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 max-h-40 overflow-y-auto pr-1">
+		<div class="grid grid-cols-2 gap-1.5 flex-1 min-h-0 overflow-y-auto pr-1">
 			{#each filteredGallery as item (item.slug)}
-				<div class="p-2 border {hudWire.activeCommunitySlug === item.slug ? 'border-[var(--hud-accent-primary)] bg-[var(--hud-accent-primary)]/10' : 'border-[var(--hud-border)] bg-[var(--hud-surface)]/45'} flex flex-col justify-between gap-1.5">
+				<div class="p-1.5 border {hudWire.activeCommunitySlug === item.slug ? 'border-[var(--hud-accent-primary)] bg-[var(--hud-accent-primary)]/10' : 'border-[var(--hud-border)] bg-[var(--hud-surface)]/45'} flex flex-col justify-between gap-1">
 					<div>
 						<div class="flex items-center justify-between gap-1"><span class="font-mono text-[10px] font-bold text-[var(--hud-text)] truncate">{item.name}</span><span class="font-mono text-[9px] text-[var(--hud-muted)]">@{item.authorHandle}</span></div>
 						<div class="flex items-center gap-1 mt-1">
 							{#each ['bgCanvas', 'bgPanel', 'accentPrimary', 'accentSecondary', 'syntaxKeyword'] as key (key)}
-								<span class="w-3.5 h-2.5 border border-[var(--hud-border)]" style="background:{String(item.tokens[key] ?? 'var(--hud-accent)')}"></span>
+								<span class="w-3 h-2 border border-[var(--hud-border)]" style="background:{String(item.tokens[key] ?? 'var(--hud-accent)')}"></span>
 							{/each}
 							<span class="ml-auto font-mono text-[9px] px-1 bg-[var(--hud-bg)] text-[var(--syntax-keyword)]">fn =&gt; &#123;&#125;</span>
 						</div>
@@ -106,7 +106,7 @@
 			{/each}
 		</div>
 	{:else}
-		<div class={`grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-[10px] ${shakeForm ? 'hud-form-shake' : ''}`}>
+		<div class={`grid grid-cols-2 gap-1.5 font-mono text-[10px] flex-1 min-h-0 overflow-y-auto ${shakeForm ? 'hud-form-shake' : ''}`}>
 			<label class="flex flex-col gap-0.5 text-[var(--hud-muted)]">Theme Name<input type="text" bind:value={customName} maxlength="48" class="px-2 py-1 bg-[var(--hud-surface)] border border-[var(--hud-border)] text-[var(--hud-text)]" /></label>
 			<label class="flex flex-col gap-0.5 text-[var(--hud-muted)]">Polarity<select bind:value={customPolarity} class="px-2 py-1 bg-[var(--hud-surface)] border border-[var(--hud-border)] text-[var(--hud-text)]"><option value="DARK">DARK</option><option value="LIGHT">LIGHT</option></select></label>
 			<label class="flex items-center justify-between gap-1 px-2 py-1 border border-[var(--hud-border)] bg-[var(--hud-surface)]/40"><span>bgCanvas</span><input type="color" bind:value={bgCanvas} /></label>
@@ -116,9 +116,9 @@
 			<label class="flex items-center justify-between gap-1 px-2 py-1 border border-[var(--hud-border)] bg-[var(--hud-surface)]/40"><span>syntaxKeyword</span><input type="color" bind:value={syntaxKeyword} /></label>
 			<label class="flex items-center justify-between gap-1 px-2 py-1 border border-[var(--hud-border)] bg-[var(--hud-surface)]/40"><span>syntaxString</span><input type="color" bind:value={syntaxString} /></label>
 		</div>
-		<div class="flex items-center justify-end gap-2 mt-2">
+		<div class="flex items-center justify-end gap-2 shrink-0">
 			<HudChamferButton chamferCorner={CHAMFER_CORNERS.DIAGONAL_PAIR} cutPx={5} variant="accent" onclick={applyLiveStudioTokens} className="px-2.5 py-1 font-mono text-[10px]">Apply Locally</HudChamferButton>
-			<HudChamferButton chamferCorner={CHAMFER_CORNERS.DIAGONAL_PAIR} cutPx={5} variant="brass" onclick={publishCustomTheme} className="px-2.5 py-1 font-mono text-[10px]">Publish to Community Gallery →</HudChamferButton>
+			<HudChamferButton chamferCorner={CHAMFER_CORNERS.DIAGONAL_PAIR} cutPx={5} variant="brass" onclick={publishCustomTheme} className="px-2.5 py-1 font-mono text-[10px]">Publish →</HudChamferButton>
 		</div>
 	{/if}
 </div>

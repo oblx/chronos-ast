@@ -8,7 +8,7 @@
 
 Chronos `v1.8.0` separates principal identity (`users.uid` `u32`, `0` for Demo Guest) from multi-provider authentication factors (`user_auth_identities`) using pure **Web Crypto (`crypto.subtle`)** and **`Bun.password`**:
 
-* **First-Paint `Chronos Lobby` & `Remember Me` (`rememberMe`) Persistence:** Unauthenticated visitors enter a centered First-Paint `Chronos Lobby` (`AUTH_LOBBY`, `z-50`) with all `8` perimeter HUD zones folded. Ticking `[✓] Remember Me (30 Days)` persists a rotating `__Host-chronos_rt` cookie (`Max-Age=2592000`) and signed IndexedDB session record (`chronos_hud_session_v2`) so subsequent reloads auto-restore the operator's `11`-zone HUD without showing the lobby; leaving it unticked scopes credentials strictly to `sessionStorage`.
+* **First-Paint `Chronos Lobby` & `Remember Me` (`rememberMe`) Persistence:** Unauthenticated visitors enter a centered First-Paint `Chronos Lobby` (`AUTH_LOBBY`, `z-50`) with all `8` perimeter HUD zones folded. Ticking `[x] Remember Me (30 Days)` persists a rotating `__Host-chronos_rt` cookie (`Max-Age=2592000`) and signed IndexedDB session record (`chronos_hud_session_v2`) so subsequent reloads auto-restore the operator's `11`-zone HUD without showing the lobby; leaving it unticked scopes credentials strictly to `sessionStorage`.
 * **Local Argon2id + Pepper (`local.auth.ts`):** Hashes `HMAC-SHA256(pepper, salt || password)` via Argon2id (`memoryCost: 65536`, `timeCost: 3`) with constant-time dummy verification and sliding-window rate limiting.
 * **GitHub & Google OAuth2 PKCE (`github.auth.ts`, `google.auth.ts`):** Zero-SDK OAuth2 PKCE adapters linking `(authFlow, providerSubject)` into `user_auth_identities` alongside `FIDO2 WebAuthn` (`webauthn.auth.ts`), `OIDC` (`oidc.auth.ts`), and `Scoped PATs` (`pat.auth.ts`).
 * **DEVMODE Operator Seeding (`seed.operator.ts`):** When `DEVMODE=true`, idempotently seeds `oblx` (`uid=1`, `password: "nopenope"`, `email: "code@oblx.dev"`, `primaryGroup: "admin"`, `0xFFFFFFFF`) plus `analyst_dev`, `auditor_dev`, and `viewer_dev` quick-switch personas.
@@ -29,7 +29,7 @@ Chronos `v1.8.0` separates principal identity (`users.uid` `u32`, `0` for Demo G
 
 ---
 
-## 3. 5-Stage Observable Server Wire DAG, Twin MCP Lock & Hygiene Audit (`v1.9.3`)
+## 3. 5-Stage Observable Server Wire DAG, Twin MCP Lock & Hygiene Audit (`v1.9.7`)
 
 * **Strict RBAC DOM Omission & Live Wire Observatory (`chronos.admin.wire.observe`):** UI panels never render `<Lock>` placeholders for unauthorized capabilities; `HudTopBarZones`, `HudBottomDockZones`, and `StationsModal` render Wire Tap and `WireObservatoryModal.svelte` only when `securityWire.can(CAPABILITY_BITS.ADMIN_WIRE_OBSERVE)`.
 * **Twin MCP Control Plane Guard (`POST /api/mcp/twin`):** Requires `ADMIN_WIRE_OBSERVE` (`0x10000000`) + `COLLAB_OVERRIDE` (`0x02000000`) and `actorWeight >= targetWeight`, returning JSON-RPC `-32003` and appending SHA-256 `audit_log` entries on every dispatch or denial.

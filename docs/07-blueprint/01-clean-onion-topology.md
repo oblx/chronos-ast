@@ -1,6 +1,6 @@
 # 07-01 // Clean Onion Topology, Barrel Discipline & Invariant Auditor
 
-> **Author:** `Oblx <code@oblx.dev>` | **Version:** `1.9.3` | **Parent:** [`../00-index.md`](../00-index.md)
+> **Author:** `Oblx <code@oblx.dev>` | **Version:** `1.9.7` | **Parent:** [`../00-index.md`](../00-index.md)
 
 ---
 

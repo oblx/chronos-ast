@@ -6,7 +6,7 @@
 
 ## 1. Identity & Runtime Stack
 
-* **Mission:** MIT-licensed open-source static code analysis and architectural comprehension engine built on the Chronos Polyglot AST & Graph Comprehension Architecture (`v1.9.3`).
+* **Mission:** MIT-licensed open-source static code analysis and architectural comprehension engine built on the Chronos Polyglot AST & Graph Comprehension Architecture (`v1.9.7`).
 * **Runtime & UI:** Pure Bun + TypeScript 7 + Svelte 5 Runes + Ogygia Island Hydration (`src/lib/ogygia/`). Zero React, zero Node.js runtime polyfills.
 * **Agent & Persistence Triad:**
 	* **Autonomous Agent Bridge:** Machine-readable discovery (`GET /api/mcp/manifest`), headless `bun run mcp:token`, HMAC-SHA256 webhooks (`webhook.bridge.ts`).

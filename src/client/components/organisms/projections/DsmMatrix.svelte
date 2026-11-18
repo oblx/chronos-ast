@@ -3,12 +3,13 @@
 	@description Layered Dependency Structure Matrix (DSM) with collapsible architecture rings, Tarjan SCC diagonal boxes, and cell reference popover.
 -->
 <script lang="ts">
-	import { DSM_TOKENS } from '@config/hud.tokens';
+	import { DSM_TOKENS, HUD_INTENT_KINDS } from '@config/hud.tokens';
 	import {
 		type DsmCellDescriptor,
 		type GraphEntityNode,
 		type GraphReferenceEdge,
-		buildLayeredDsmProjection
+		buildLayeredDsmProjection,
+		hudWire
 	} from '@client/state';
 	import HudInteractiveCanvasStage from '../perimeter/HudInteractiveCanvasStage.svelte';
 
@@ -36,7 +37,11 @@
 	}
 	function toggleRing(key: string): void {
 		collapsedRings = collapsedRings.includes(key) ? collapsedRings.filter((k) => k !== key) : [...collapsedRings, key];
+		hudWire.emitUiIntent(HUD_INTENT_KINDS.PROJECTION_OPTION_TOGGLE, 'WORLD_CANVAS', { view: 'DSM', ring: key, collapsed: collapsedRings.includes(key) });
 	}
+	function toggleCyclesFilter(): void { showCyclesOnly = !showCyclesOnly; hudWire.emitUiIntent(HUD_INTENT_KINDS.PROJECTION_OPTION_TOGGLE, 'WORLD_CANVAS', { view: 'DSM', showCyclesOnly }); }
+	function selectDsmEntity(id: number): void { hudWire.emitUiIntent(HUD_INTENT_KINDS.FOCUS_ENTITY, 'WORLD_CANVAS', { view: 'DSM', entityId: id }, id); onSelectNode(id); }
+	function setInspectedCell(cell: DsmCellDescriptor | null): void { inspectedCell = cell; hudWire.emitUiIntent(HUD_INTENT_KINDS.PROJECTION_OPTION_TOGGLE, 'WORLD_CANVAS', { view: 'DSM', inspectedCell: cell ? `${cell.rowIdx}:${cell.colIdx}` : null }); }
 	function sccBoxBorderStyle(r: number, c: number): string {
 		const box = dsm.sccDiagonalBoxes.find((b) => r >= b.startIdx && r <= b.endIdx && c >= b.startIdx && c <= b.endIdx);
 		if (!box) return '';
@@ -51,7 +56,7 @@
 			<span class="text-[var(--hud-accent)] font-bold">DSM // LAYERED DEPENDENCY MATRIX</span>
 			<span class="text-[11px] text-[var(--hud-muted)]">Cycles: <strong class="text-[var(--hud-warning)]">{dsm.upperTriangleCycleCount}</strong> · Breaches: <strong class="text-[var(--hud-danger)]">{dsm.layerViolationCount}</strong> · SCC Clusters: <strong>{dsm.sccDiagonalBoxes.length}</strong></span>
 		</div>
-		<button type="button" onclick={() => (showCyclesOnly = !showCyclesOnly)} class={`px-2.5 py-1 text-[11px] border cursor-pointer ${showCyclesOnly ? 'border-[var(--hud-warning)] text-[var(--hud-warning)] bg-[var(--hud-surface)] font-bold' : 'border-[var(--hud-border)] text-[var(--hud-muted)] bg-[var(--hud-bg)]'}`}>{showCyclesOnly ? 'Cyclic / Breach Rows' : 'Filter Upper-Triangle Cycles'}</button>
+		<button type="button" onclick={toggleCyclesFilter} class={`px-2.5 py-1 text-[11px] border cursor-pointer ${showCyclesOnly ? 'border-[var(--hud-warning)] text-[var(--hud-warning)] bg-[var(--hud-surface)] font-bold' : 'border-[var(--hud-border)] text-[var(--hud-muted)] bg-[var(--hud-bg)]'}`}>{showCyclesOnly ? 'Cyclic / Breach Rows' : 'Filter Upper-Triangle Cycles'}</button>
 	</div>
 
 	<div class="flex-1 overflow-hidden">
@@ -63,7 +68,9 @@
 							<tr>
 								<th class="border border-[var(--hud-border)] bg-[var(--hud-panel)] px-2 py-1 text-left text-[var(--hud-muted)]">Entity // Virtual Ring</th>
 								{#each dsm.orderedEntities as colEnt, cIdx (colEnt.id)}
-									<th class="border border-[var(--hud-border)] bg-[var(--hud-panel)] px-1.5 py-1 text-center text-[var(--hud-accent)] tabular-nums" data-hud-tip={colEnt.qualifiedName}>{String(cIdx + 1).padStart(2, '0')}</th>
+									<th class={`border border-[var(--hud-border)] px-1.5 py-1 text-center tabular-nums ${colEnt.id === selectedEntityId ? 'bg-[var(--hud-surface)] text-[var(--hud-accent-secondary)]' : 'bg-[var(--hud-panel)] text-[var(--hud-accent)]'}`} data-hud-tip={colEnt.qualifiedName}>
+										<button type="button" data-testid={`dsm-col-hdr-${colEnt.id}`} onclick={() => selectDsmEntity(colEnt.id)} class="w-full h-full cursor-pointer hover:underline">{String(cIdx + 1).padStart(2, '0')}</button>
+									</th>
 								{/each}
 							</tr>
 						</thead>
@@ -89,7 +96,7 @@
 											{@const isDiag = cell.rowIdx === cell.colIdx}
 											<td style={`width:${DSM_TOKENS.CELL_SIZE_PX}px;height:${DSM_TOKENS.CELL_SIZE_PX}px`} class={`border border-[var(--hud-border)] text-center tabular-nums ${sccBoxBorderStyle(cell.rowIdx, cell.colIdx)} ${isDiag ? 'bg-[var(--hud-border)]/40 text-[var(--hud-muted)]' : cell.isLayerViolation ? 'bg-[var(--hud-danger)]/30 text-[var(--hud-danger)] font-bold' : cell.isUpperTriangleCycle ? 'bg-[var(--hud-warning)]/25 text-[var(--hud-warning)] font-bold' : cell.weight > 0 ? 'bg-[var(--hud-accent-primary)]/20 text-[var(--hud-nominal)] font-semibold' : 'text-[var(--hud-muted)]/20'}`}>
 												{#if cell.weight > 0 && !isDiag}
-													<button type="button" onclick={() => (inspectedCell = cell)} class="w-full h-full cursor-pointer" data-hud-tip={`${rowEnt.name} -> ${dsm.orderedEntities[cell.colIdx]?.name} (${cell.weight})`}>{cell.weight}</button>
+													<button type="button" onclick={() => setInspectedCell(cell)} class="w-full h-full cursor-pointer" data-hud-tip={`${rowEnt.name} -> ${dsm.orderedEntities[cell.colIdx]?.name} (${cell.weight})`}>{cell.weight}</button>
 												{:else if isDiag}•{/if}
 											</td>
 										{/each}
@@ -107,7 +114,7 @@
 		<div class="absolute bottom-3 right-3 z-20 w-80 bg-[var(--hud-panel)] border border-[var(--hud-accent-primary)] p-2.5 shadow-xl text-[11px]">
 			<div class="flex items-center justify-between border-b border-[var(--hud-border)] pb-1 mb-1.5">
 				<span class="font-bold text-[var(--hud-accent-secondary)]">CELL REFS ({inspectedCell.references.length})</span>
-				<button type="button" onclick={() => (inspectedCell = null)} class="text-[var(--hud-muted)] cursor-pointer">✕</button>
+				<button type="button" onclick={() => setInspectedCell(null)} class="text-[var(--hud-muted)] cursor-pointer">✕</button>
 			</div>
 			<div class="max-h-32 overflow-y-auto flex flex-col gap-1">
 				{#each inspectedCell.references as r, rIdx (`${r.kind}-${r.line}-${rIdx}`)}

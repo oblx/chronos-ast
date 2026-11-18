@@ -4,7 +4,7 @@
 
 ---
 
-## 1. Dual-Spine MCP Bridge, Manifest Discovery & Webhook Loop (`v1.9.3`)
+## 1. Dual-Spine MCP Bridge, Manifest Discovery & Webhook Loop (`v1.9.7`)
 
 `src/server/mcp/` and `src/workers/mcp.server.ts` implement zero-dependency JSON-RPC `2.0` MCP servers over both `stdio` and Streamable HTTP (`POST /api/mcp`, `POST /api/mcp/twin`), paired with public discovery (`GET /api/mcp/manifest`), headless `bun run mcp:token` CLI PAT minting (`src/workers/cli/mint_mcp_token.ts`), and HMAC-SHA256 signed workflow webhooks (`src/plugins/exporters/webhook.bridge.ts`):
 

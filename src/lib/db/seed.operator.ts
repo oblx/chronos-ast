@@ -11,6 +11,15 @@ import { hashPasswordWithSaltAndPepper } from '@core/security/password.crypto';
 import type { ChronosDatabaseHandle } from './sqlite/client/connection';
 import { credentials, rbacUserGroups, userAuthIdentities, users } from './sqlite/schema/tables';
 
+const seedHashCache = new Map<string, Promise<{ readonly saltHex: string; readonly passwordHash: string; readonly pepperVersion: number }>>();
+
+function getCachedSeedHash(rawPass: string, envRecord?: Record<string, string | undefined>) {
+	const key = `${rawPass}::${envRecord?.CHRONOS_AUTH_PEPPER_V1 ?? ''}`;
+	let p = seedHashCache.get(key);
+	if (!p) { p = hashPasswordWithSaltAndPepper(rawPass, 1, envRecord); seedHashCache.set(key, p); }
+	return p;
+}
+
 export async function upsertSeededAccount(
 	handle: ChronosDatabaseHandle,
 	acc: (typeof SEEDED_OPERATOR_CONFIG.DEV_ACCOUNTS)[number],
@@ -21,7 +30,7 @@ export async function upsertSeededAccount(
 	if (existing) return;
 
 	const rawPass = passwordOverride ?? acc.password;
-	const hashed = await hashPasswordWithSaltAndPepper(rawPass, 1, envRecord);
+	const hashed = await getCachedSeedHash(rawPass, envRecord);
 	const now = Date.now();
 	const userIdStr = String(acc.uid);
 
@@ -66,7 +75,7 @@ export async function ensureSeededOperatorAccount(
 	const overridePass = envRecord?.CHRONOS_SEED_PASSWORD ?? (typeof process !== 'undefined' ? process.env?.CHRONOS_SEED_PASSWORD : undefined);
 	await upsertSeededAccount(handle, primary, overridePass, envRecord);
 
-	const legHash = await hashPasswordWithSaltAndPepper(SEEDED_OPERATOR_CONFIG.LEGACY_PASSWORD, 1, envRecord);
+	const legHash = await getCachedSeedHash(SEEDED_OPERATOR_CONFIG.LEGACY_PASSWORD, envRecord);
 	handle.db.insert(credentials).values({
 		userId: String(primary.uid), authSource: AUTH_SOURCES.LOCAL_PASSWORD, identifier: SEEDED_OPERATOR_CONFIG.LEGACY_USERNAME,
 		saltHex: legHash.saltHex, passwordHash: legHash.passwordHash, pepperVersion: legHash.pepperVersion, createdAt: Date.now(),

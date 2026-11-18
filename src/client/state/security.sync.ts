@@ -86,3 +86,17 @@ export function resolveOfflineDemoUser(body: Record<string, unknown>, config: { 
 	if (uName !== config.USERNAME && uName !== config.LEGACY_USERNAME) return null;
 	return { userId: config.USER_ID, uid: config.UID, username: config.USERNAME, roleId: config.OFFLINE_ROLE_ID, effectiveMask: config.OFFLINE_MASK };
 }
+
+export async function mintScopedPatToken(headers: Record<string, string>, label: string, scopedBitmask: number): Promise<{ rawToken: string; error?: string }> {
+	const res = await fetch(API_ROUTES.AUTH_PAT, { method: 'POST', headers, body: JSON.stringify({ label: label.trim() || 'CI Token', scopedBitmask: scopedBitmask >>> 0, expiresInDays: 30 }) });
+	const data = (await res.json()) as Record<string, unknown>;
+	if (!res.ok) return { rawToken: '', error: String(data.error ?? 'PAT mint failed') };
+	return { rawToken: String(data.rawToken ?? '') };
+}
+
+export async function fetchVaultSecretList<T>(headers: Record<string, string>): Promise<readonly T[] | null> {
+	const res = await fetch(API_ROUTES.VAULT_SECRETS, { headers });
+	if (!res.ok) return null;
+	const data = (await res.json()) as { secrets?: readonly T[] };
+	return Array.isArray(data.secrets) ? data.secrets : null;
+}

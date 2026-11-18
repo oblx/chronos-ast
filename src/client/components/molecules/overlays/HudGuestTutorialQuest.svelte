@@ -9,6 +9,7 @@
 	import { PRINCIPAL_KINDS } from '@config/security.constants';
 	import { hudWire } from '@client/state/hud.wire.svelte';
 	import { securityWire } from '@client/state/security.wire.svelte';
+	import { uiSpotlightMachine } from '@ui';
 	import HudChamferButton from '@client/components/atoms/HudChamferButton.svelte';
 	import HudChamferFrame from '@client/components/atoms/HudChamferFrame.svelte';
 
@@ -50,7 +51,7 @@
 	}
 </script>
 
-{#if isGuest && !hudWire.isStealthMode && hudWire.tourActive && !hudWire.tutorialCompleted && hudWire.activeModal === HUD_MODALS.NONE}
+{#if isGuest && !hudWire.isStealthMode && hudWire.tourActive && !uiSpotlightMachine.active && !hudWire.spotlightTarget && !hudWire.tutorialCompleted && hudWire.activeModal === HUD_MODALS.NONE}
 	<aside
 		data-testid="guest-tutorial-quest"
 		aria-label="Guided 30-Second Progressive HUD Tour"

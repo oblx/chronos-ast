@@ -4,6 +4,7 @@
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import HudAnimatedResizeBody from './HudAnimatedResizeBody.svelte';
 
 	interface Props {
 		title: string;
@@ -45,8 +46,8 @@
 		{/if}
 	</button>
 	{#if isOpen}
-		<div class="p-3 border-t border-[var(--hud-border)] bg-[var(--hud-bg)]/80 flex flex-col gap-2 text-[13px] leading-5">
+		<HudAnimatedResizeBody transitionKey={title} innerClassName="p-3 border-t border-[var(--hud-border)] bg-[var(--hud-bg)]/80 gap-2 text-sm leading-[1.55]">
 			{@render children()}
-		</div>
+		</HudAnimatedResizeBody>
 	{/if}
 </div>

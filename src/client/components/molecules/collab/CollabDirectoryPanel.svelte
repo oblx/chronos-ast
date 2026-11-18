@@ -40,6 +40,7 @@
 		const q = searchQuery.trim().toLowerCase();
 		return q ? source.filter((op) => String(op.username).toLowerCase().includes(q) || String(op.roleId).toLowerCase().includes(q)) : source;
 	});
+	function submitAddFriend(): void { onFriendAction('REQUEST', undefined, targetUsernameInput); targetUsernameInput = ''; }
 </script>
 
 <div id="collab-col-directory" class="relative overflow-hidden min-w-[300px] lg:min-w-0 lg:flex-1 h-[360px] snap-start">
@@ -53,7 +54,7 @@
 			<input type="text" bind:value={searchQuery} placeholder="Filter roster..." class="min-w-0 flex-1 px-2 py-1 bg-[var(--hud-bg)] border border-[var(--hud-border)] text-[var(--hud-text)] text-[11.5px]" />
 			{#if !isGuestMode}
 				<input type="text" bind:value={targetUsernameInput} placeholder="Username..." class="w-24 px-2 py-1 bg-[var(--hud-bg)] border border-[var(--hud-border)] text-[var(--hud-text)] text-[11.5px]" />
-				<HudChamferButton chamferCorner={CHAMFER_PROFILES.RIGHT_END_CAP} cutPx={5} variant="accent" testid="add-friend-btn" tip="Send friend request by username" onclick={() => { onFriendAction('REQUEST', undefined, targetUsernameInput); targetUsernameInput = ''; }} className="px-2 py-1 text-[10.5px] font-bold">
+				<HudChamferButton chamferCorner={CHAMFER_PROFILES.RIGHT_END_CAP} cutPx={5} variant="accent" testid="add-friend-btn" tip="Send friend request by username" onclick={submitAddFriend} className="px-2 py-1 text-[10.5px] font-bold">
 					<UserPlus size={11} /> Add
 				</HudChamferButton>
 			{/if}

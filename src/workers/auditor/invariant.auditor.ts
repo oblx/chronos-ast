@@ -25,12 +25,17 @@ export interface InvariantAuditReport {
 	readonly missingBarrelViolations: readonly string[];
 	readonly blueprintBrandViolations: readonly string[];
 	readonly forbiddenSvelteImports: readonly string[];
+	readonly emojiViolations: readonly string[];
+	readonly uiFirewallViolations: readonly string[];
 	readonly repoHygieneViolations: readonly string[];
 }
 
 const BRAND_LEAK_RE = /(scitools|luckperms|pokemon|gen-?1)/i;
 const BLUEPRINT_BRAND_RE = /chronos/i;
 const FORBIDDEN_SVELTE_RE = /(from\s+['"]@(core|lib|plugins|server|workers)(\/|['"])|\bfetch\s*\()/;
+const UI_FIREWALL_IMPORT_RE = /from\s+['"](@(core|server|plugins|lib|client|config|workers)(\/|['"])|(\.\.\/)+(core|server|plugins|lib|client|config|workers)\b)/;
+const UI_FIREWALL_DOMAIN_RE = /\b(Butterfly|Tarjan|CodeCheck|CHR-CORE|dispatch_ast_job)\b/;
+const EMOJI_RE = /\p{Extended_Pictographic}/u;
 
 function stripNonTemplateComments(raw: string): string {
 	return raw.replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/.*$/gm, '$1');
@@ -46,18 +51,13 @@ function walkDirectories(rootDir: string, out: string[] = []): string[] {
 }
 
 function auditFolderCapsAndBarrels(srcRoot: string, docsRoot: string): { folderCapViolations: string[]; missingBarrelViolations: string[] } {
-	const folderCapViolations: string[] = [];
-	const missingBarrelViolations: string[] = [];
+	const folderCapViolations: string[] = [], missingBarrelViolations: string[] = [];
 	for (const root of [srcRoot, docsRoot, 'tests', 'benches']) {
 		for (const dir of walkDirectories(root)) {
 			if (dir.startsWith(`${docsRoot}/skills`)) continue;
 			const directFiles = readdirSync(dir, { withFileTypes: true }).filter((e) => e.isFile());
-			if (directFiles.length > MAX_FILES_PER_FOLDER) {
-				folderCapViolations.push(`${dir} (${directFiles.length} > ${MAX_FILES_PER_FOLDER})`);
-			}
-			if ((dir === srcRoot || dir.startsWith(`${srcRoot}/`)) && !existsSync(join(dir, 'index.ts'))) {
-				missingBarrelViolations.push(dir);
-			}
+			if (directFiles.length > MAX_FILES_PER_FOLDER) folderCapViolations.push(`${dir} (${directFiles.length} > ${MAX_FILES_PER_FOLDER})`);
+			if ((dir === srcRoot || dir.startsWith(`${srcRoot}/`)) && !existsSync(join(dir, 'index.ts'))) missingBarrelViolations.push(dir);
 		}
 	}
 	return { folderCapViolations, missingBarrelViolations };
@@ -65,15 +65,11 @@ function auditFolderCapsAndBarrels(srcRoot: string, docsRoot: string): { folderC
 
 function findOrphanedComponents(srcFiles: readonly string[], contents: ReadonlyMap<string, string>): string[] {
 	const orphaned: string[] = [];
-	const componentFiles = srcFiles.filter((f) => f.startsWith('src/client/components/') && f.endsWith('.svelte'));
-	for (const comp of componentFiles) {
+	for (const comp of srcFiles.filter((f) => f.startsWith('src/client/components/') && f.endsWith('.svelte'))) {
 		const name = comp.split('/').pop()!.replace(/\.svelte$/, '');
 		let referenced = false;
 		for (const [otherPath, content] of contents) {
-			if (otherPath !== comp && !otherPath.endsWith('/index.ts') && content.includes(name)) {
-				referenced = true;
-				break;
-			}
+			if (otherPath !== comp && !otherPath.endsWith('/index.ts') && content.includes(name)) { referenced = true; break; }
 		}
 		if (!referenced) orphaned.push(comp);
 	}
@@ -97,7 +93,7 @@ export async function runCodebaseInvariantAudit(srcRoot = 'src', docsRoot = 'doc
 	const srcFiles = Array.from(new Bun.Glob('**/*.{ts,svelte,css}').scanSync({ cwd: srcRoot })).map((p) => `${srcRoot}/${p}`);
 	const docFiles = Array.from(new Bun.Glob('**/*.md').scanSync({ cwd: docsRoot })).filter((p) => !p.startsWith('skills/')).map((p) => `${docsRoot}/${p}`);
 	const oversizedSourceFiles: string[] = [], magicColorViolations: string[] = [], hardcodedVersionViolations: string[] = [];
-	const brandLeakViolations: string[] = [], forbiddenSvelteImports: string[] = [];
+	const brandLeakViolations: string[] = [], forbiddenSvelteImports: string[] = [], emojiViolations: string[] = [], uiFirewallViolations: string[] = [];
 	let totalSrcLines = 0;
 	const allSourceContents = new Map<string, string>();
 
@@ -107,15 +103,19 @@ export async function runCodebaseInvariantAudit(srcRoot = 'src', docsRoot = 'doc
 		const lineCount = raw.split('\n').length - (raw.endsWith('\n') ? 1 : 0);
 		totalSrcLines += lineCount;
 		if (lineCount > 150) oversizedSourceFiles.push(`${file} (${lineCount})`);
-		if (!file.startsWith('src/config/') && !file.endsWith('app.css')) {
+		if ((file.startsWith('src/client/') || file.startsWith('src/config/') || file.startsWith('src/ui/')) && (file.endsWith('.ts') || file.endsWith('.svelte')) && EMOJI_RE.test(raw)) {
+			emojiViolations.push(file);
+		}
+		if (file.startsWith('src/ui/') && (UI_FIREWALL_IMPORT_RE.test(raw) || UI_FIREWALL_DOMAIN_RE.test(raw))) {
+			uiFirewallViolations.push(file);
+		}
+		if (!file.startsWith('src/config/') && !file.startsWith('src/ui/tokens/') && !file.endsWith('app.css')) {
 			const cleaned = raw.replace(/#(ffffff|000000)\b/gi, '');
 			if (/["']#[0-9a-fA-F]{6}["']/.test(cleaned)) magicColorViolations.push(file);
 			if (file.endsWith('.ts') || file.endsWith('.svelte')) {
 				const stripped = stripNonTemplateComments(raw);
 				if (/\bv[12]\.\d+\.\d+\b/.test(stripped)) hardcodedVersionViolations.push(file);
-				if (file.startsWith('src/client/components/') && file.endsWith('.svelte') && FORBIDDEN_SVELTE_RE.test(stripped)) {
-					forbiddenSvelteImports.push(file);
-				}
+				if (file.startsWith('src/client/components/') && file.endsWith('.svelte') && FORBIDDEN_SVELTE_RE.test(stripped)) forbiddenSvelteImports.push(file);
 			}
 		}
 		if (!file.endsWith('invariant.auditor.ts') && BRAND_LEAK_RE.test(raw)) brandLeakViolations.push(file);
@@ -130,13 +130,15 @@ export async function runCodebaseInvariantAudit(srcRoot = 'src', docsRoot = 'doc
 		oversizedSourceFiles.length === 0 && oversizedDocFiles.length === 0 && docFenceViolations.length === 0 &&
 		orphanedComponentFiles.length === 0 && magicColorViolations.length === 0 && hardcodedVersionViolations.length === 0 &&
 		brandLeakViolations.length === 0 && folderCapViolations.length === 0 && missingBarrelViolations.length === 0 &&
-		blueprintBrandViolations.length === 0 && forbiddenSvelteImports.length === 0 && hygiene.violations.length === 0;
+		blueprintBrandViolations.length === 0 && forbiddenSvelteImports.length === 0 && emojiViolations.length === 0 &&
+		uiFirewallViolations.length === 0 && hygiene.violations.length === 0;
 
 	return {
 		passed, checkedSourceFiles: srcFiles.length, checkedDocFiles: docFiles.length, totalSrcLines,
 		oversizedSourceFiles, oversizedDocFiles, docFenceViolations, orphanedComponentFiles,
 		magicColorViolations, hardcodedVersionViolations, brandLeakViolations,
 		folderCapViolations, missingBarrelViolations, blueprintBrandViolations, forbiddenSvelteImports,
-		repoHygieneViolations: hygiene.violations,
+		emojiViolations, uiFirewallViolations, repoHygieneViolations: hygiene.violations,
 	};
 }
+

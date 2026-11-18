@@ -4,6 +4,8 @@
  */
 import { API_ROUTES } from '@config/constants';
 import { HLC_SYNC_CONSTANTS } from '@config/security.constants';
+import { INTENT_ROUTING_CLASS, classifyIntentRoutingTier, type IntentRoutingTier } from '@ui/wire';
+export { INTENT_ROUTING_CLASS, classifyIntentRoutingTier, type IntentRoutingTier };
 
 export const MAX_WIRE_RING_BUFFER = 256 as const;
 export type WireChannelKind = 'CLIENT_DAG' | 'SERVER_DAG' | 'WS_COLLAB' | 'RBAC_SECURITY';
@@ -14,6 +16,7 @@ export type WireStageKind =
 export interface WireTraceRecord {
 	readonly seq: number; readonly traceId: string; readonly hlc: string; readonly stage: WireStageKind;
 	readonly channel: WireChannelKind; readonly intentKind: string; readonly sourceZone: string;
+	readonly routingTier?: IntentRoutingTier;
 	readonly durationUs: number; readonly status: 'OK' | 'DENIED' | 'ERROR';
 	readonly summary: string; readonly payloadPreview: string;
 }
@@ -33,6 +36,7 @@ class ClientDagKernel {
 	traces: readonly WireTraceRecord[] = [{
 		seq: 1, traceId: 'cli-000001', hlc: `${Date.now()}:1`, stage: 'STAGE_4_TELEMETRY',
 		channel: 'CLIENT_DAG', intentKind: 'DAG_KERNEL_BOOT', sourceZone: 'WORLD_CANVAS',
+		routingTier: INTENT_ROUTING_CLASS.TIER_0_LOCAL_UI,
 		durationUs: 42, status: 'OK', summary: '4-Stage Client & 5-Stage Server Observable Wire DAG online',
 		payloadPreview: '{"ringBuffer":256}',
 	}];
@@ -46,7 +50,7 @@ class ClientDagKernel {
 
 	appendTrace(input: Omit<WireTraceRecord, 'seq' | 'traceId' | 'hlc'>): WireTraceRecord {
 		const seq = ++this.seq + 1;
-		const rec: WireTraceRecord = { seq, traceId: `dag-${seq.toString(16).padStart(6, '0')}`, hlc: this.nextHlc(), ...input };
+		const rec: WireTraceRecord = { seq, traceId: `dag-${seq.toString(16).padStart(6, '0')}`, hlc: this.nextHlc(), routingTier: input.routingTier ?? classifyIntentRoutingTier(input.intentKind), ...input };
 		if (!this.paused) this.traces = [rec, ...this.traces].slice(0, MAX_WIRE_RING_BUFFER);
 		return rec;
 	}
@@ -56,15 +60,16 @@ class ClientDagKernel {
 		if (!env.intentKind.trim()) {
 			return this.appendTrace({
 				stage: 'STAGE_1_VALIDATE', channel: env.channel ?? 'CLIENT_DAG', intentKind: 'INVALID_INTENT',
-				sourceZone: env.sourceZone || 'HUD', durationUs: 1, status: 'ERROR',
+				sourceZone: env.sourceZone || 'HUD', routingTier: INTENT_ROUTING_CLASS.TIER_0_LOCAL_UI, durationUs: 1, status: 'ERROR',
 				summary: 'Rejected empty intentKind at STAGE_1_VALIDATE', payloadPreview: '{}',
 			});
 		}
+		const routingTier = classifyIntentRoutingTier(env.intentKind);
 		env.reduce?.();
 		const durationUs = Math.max(1, Math.round((performance.now() - t0) * 1000));
 		return this.appendTrace({
-			stage: 'STAGE_4_TELEMETRY', channel: env.channel ?? 'CLIENT_DAG', intentKind: env.intentKind,
-			sourceZone: env.sourceZone, durationUs, status: 'OK',
+			stage: 'STAGE_4_TELEMETRY', channel: env.channel ?? (routingTier === INTENT_ROUTING_CLASS.TIER_2_REALTIME_CLUSTER ? 'WS_COLLAB' : 'CLIENT_DAG'), intentKind: env.intentKind,
+			sourceZone: env.sourceZone, routingTier, durationUs, status: 'OK',
 			summary: `${env.intentKind} [${env.sourceZone}] (${durationUs}µs)`,
 			payloadPreview: JSON.stringify(env.payload ?? {}).slice(0, 140),
 		});

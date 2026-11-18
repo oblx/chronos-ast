@@ -3,7 +3,7 @@
  * @description Pure Markdown-to-Pedagogy compiler transforming docs/ markdown SSOT files into chapters, sub-steps, tables, and drills via weighted vector scoring.
  */
 
-import type { HudViewMode } from '@config/constants';
+import { APP_METADATA, type HudViewMode } from '@config/constants';
 import { HELP_BOOK_TOKENS } from '@config/hud.tokens';
 import {
 	inferDocPedagogyRule,
@@ -56,7 +56,7 @@ export interface SpotlightRect { readonly top: number; readonly left: number; re
 export interface TooltipFloatingCoords { readonly top: number; readonly left: number; }
 
 function cleanMdText(raw: string): string {
-	return raw.replace(/\*\*/g, '').replace(/`/g, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').trim();
+	return raw.replace(/\bv1\.9\.\d+\b/g, `v${APP_METADATA.VERSION}`).replace(/\*\*/g, '').replace(/`/g, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').trim();
 }
 
 function parseSubStepBlock(chapterId: string, idx: number, rawSection: string, chapterRule: DocPedagogyRule): HelpSubStepSpec {
@@ -116,7 +116,7 @@ export function parseMarkdownDocIntoChapter(docPath: string, rawMarkdown: string
 
 export function compileHelpBookFromDocs(rawDocsMap: Readonly<Record<string, string>>): readonly HelpChapterSpec[] {
 	const sorted = Object.entries(rawDocsMap)
-		.filter(([path]) => path.endsWith('.md') && !path.includes('/skills/'))
+		.filter(([path]) => path.endsWith('.md') && !path.includes('/skills/') && !path.includes('08-sprints/'))
 		.map(([path, content]) => parseMarkdownDocIntoChapter(path, content))
 		.sort((a, b) => a.order - b.order || a.docCode.localeCompare(b.docCode));
 	return sorted.map((ch, idx) => ({ ...ch, order: idx + 1 }));

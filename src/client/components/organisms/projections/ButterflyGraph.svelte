@@ -5,7 +5,7 @@
 <script lang="ts">
 	import { COMPARE_STATUS, GRAPH_PROJECTIONS, HUD_CONFIG, type ExportFormat, type GraphProjectionMode } from '@config/constants';
 	import { REF_KIND_STYLE_MAP } from '@config/hud/hud.projections';
-	import { CHAMFER_PROFILES, HUD_GLYPHS, HUD_THEME } from '@config/hud.tokens';
+	import { CHAMFER_PROFILES, HUD_GLYPHS, HUD_INTENT_KINDS, HUD_THEME } from '@config/hud.tokens';
 	import { CAPABILITY_BITS } from '@config/security.constants';
 	import {
 		type GraphEntityNode,
@@ -42,7 +42,7 @@
 	let ctxEntity = $derived(stageCamRef?.contextMenu.entityId !== null && stageCamRef?.contextMenu.entityId !== undefined ? nodes.find((n) => n.id === stageCamRef!.contextMenu.entityId) : undefined);
 
 	function calcCartridgeWidth(titleText: string, subText: string, minW: number = L.NODE_WIDTH): number {
-		return Math.max(minW, Math.round(Math.max(titleText.length, Math.ceil(subText.length * 0.78)) * 8.5 + 48));
+		return Math.max(minW, Math.round(Math.max(titleText.length, Math.ceil(subText.length * 0.82)) * 8.5 + 58));
 	}
 	let focalW = $derived(bf ? calcCartridgeWidth(bf.focalEntity.name, `LOC:${bf.focalEntity.loc} · v(G):${bf.focalEntity.cyclomatic} · V:${bf.focalEntity.halsteadVolume}`, L.FOCAL_WIDTH) : L.FOCAL_WIDTH);
 	let leftLaneW = $derived(bf ? Math.max(L.NODE_WIDTH, ...bf.afferentEntries.map((e) => calcCartridgeWidth(`H${e.hop} · ${e.node.name}`, `${e.edgeKind} ×${e.callCount} · v(G)=${e.node.cyclomatic}`))) : L.NODE_WIDTH);
@@ -61,32 +61,34 @@
 		hudWire.triggerParticleBurst(r.left + r.width / 2, r.top + r.height / 2, 'compare');
 		onToggleCompare?.();
 	}
+	function selectSubMode(gMode: GraphProjectionMode): void { activeSubMode = gMode; hudWire.selectView(gMode); }
+	function focusCartridge(id: number): void { hudWire.emitUiIntent(HUD_INTENT_KINDS.FOCUS_ENTITY, 'WORLD_CANVAS', { view: 'BUTTERFLY', entityId: id }, id); onSelectNode(id); }
 </script>
 
-<div data-testid="butterfly-graph-surface" class="relative w-full h-full bg-[var(--hud-bg)]/55 flex flex-col overflow-hidden border border-[var(--hud-accent-primary)]/45">
+<div data-testid="butterfly-graph-surface" class="relative w-full h-full bg-[var(--hud-bg)]/55 flex flex-col overflow-hidden">
 	<HudSurfacePattern patternId={hudWire.surfacePatterns.SUBSTRATE} opacity={hudWire.surfaceOpacity * 0.25} tileScale={hudWire.surfaceScale} />
-	<div data-testid="butterfly-sub-toolbar" class="relative z-10 min-h-9 px-3 py-1.5 border-b border-[var(--hud-border)] bg-[var(--hud-panel)]/90 flex flex-wrap items-center justify-between gap-2 text-xs font-mono shrink-0">
-		<div class="flex flex-wrap items-center gap-1 min-w-0">
+	<div data-testid="butterfly-sub-toolbar" class="relative z-10 h-[2.375rem] px-3 border-b border-[var(--hud-border)] bg-[var(--hud-panel)]/90 flex flex-nowrap items-center justify-between gap-2 text-xs font-mono shrink-0 overflow-hidden">
+		<div class="flex flex-nowrap items-center gap-1 min-w-0 overflow-hidden">
 			{#each SUB_MODES as gMode, idx (gMode)}
-				<HudChamferButton chamferCorner={idx === 0 ? CHAMFER_PROFILES.CORNER_TOP_LEFT : CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} active={activeSubMode === gMode} variant={activeSubMode === gMode ? 'brass' : 'default'} onclick={() => { activeSubMode = gMode; hudWire.selectView(gMode); }} className="px-2 py-0.5 text-[11px]">{gMode}</HudChamferButton>
+				<HudChamferButton chamferCorner={idx === 0 ? CHAMFER_PROFILES.CORNER_TOP_LEFT : CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} active={activeSubMode === gMode} variant={activeSubMode === gMode ? 'brass' : 'default'} onclick={() => selectSubMode(gMode)} className="px-2 py-0.5 text-[0.6875rem]">{gMode}</HudChamferButton>
 			{/each}
 			{#if activeSubMode === GRAPH_PROJECTIONS.BUTTERFLY}
-				<div class="flex items-center gap-1 px-1 text-[11px]">
-					<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} testid="butterfly-depth-dec" tip="Decrease Hop Depth" onclick={() => hudWire.setButterflyMaxHops(hudWire.butterflyMaxHops - 1)} className="px-1.5 py-0.5 text-[11px]">-</HudChamferButton>
-					<span class="text-[var(--hud-accent-primary)] font-bold px-1">Depth {hudWire.butterflyMaxHops}/3</span>
-					<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} testid="butterfly-depth-inc" tip="Increase Hop Depth" onclick={() => hudWire.setButterflyMaxHops(hudWire.butterflyMaxHops + 1)} className="px-1.5 py-0.5 text-[11px]">+</HudChamferButton>
+				<div class="flex items-center gap-1 px-1 text-[0.6875rem] shrink-0">
+					<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} testid="butterfly-depth-dec" tip="Decrease Hop Depth" onclick={() => hudWire.setButterflyMaxHops(hudWire.butterflyMaxHops - 1)} className="px-1.5 py-0.5 text-[0.6875rem]">-</HudChamferButton>
+					<span class="text-[var(--hud-accent-primary)] font-bold px-1 whitespace-nowrap">Depth {hudWire.butterflyMaxHops}/3</span>
+					<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} testid="butterfly-depth-inc" tip="Increase Hop Depth" onclick={() => hudWire.setButterflyMaxHops(hudWire.butterflyMaxHops + 1)} className="px-1.5 py-0.5 text-[0.6875rem]">+</HudChamferButton>
 				</div>
 			{/if}
-			{#if canCompare}<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} active={compareActive} variant={compareActive ? 'nominal' : 'default'} testid="butterfly-compare-btn" onclick={handleCompareClick} className="px-2 py-0.5 text-[11px]">COMPARE</HudChamferButton>{/if}
-			<span class="text-[var(--hud-accent-secondary)] font-bold ml-1 truncate max-w-[220px]">{HUD_GLYPHS.FOCAL_RETICLE} {bf?.focalEntity.name ?? 'Focal'}</span>
+			{#if canCompare}<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} active={compareActive} variant={compareActive ? 'nominal' : 'default'} testid="butterfly-compare-btn" onclick={handleCompareClick} className="px-2 py-0.5 text-[0.6875rem]">COMPARE</HudChamferButton>{/if}
+			<span class="text-[var(--hud-accent-secondary)] font-bold ml-1 truncate max-w-[11rem]">{HUD_GLYPHS.FOCAL_RETICLE} {bf?.focalEntity.name ?? 'Focal'}</span>
 		</div>
-		<div class="flex items-center gap-1 shrink-0">
-			<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} tip="Pan Left" onclick={() => stageCamRef?.panBy(-B.PAN_STEP_X, 0)} className="px-1.5 py-0.5 text-[11px]">←</HudChamferButton>
-			<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} tip="Pan Right" onclick={() => stageCamRef?.panBy(B.PAN_STEP_X, 0)} className="px-1.5 py-0.5 text-[11px]">→</HudChamferButton>
-			<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} tip="Zoom Out" onclick={() => stageCamRef?.stepZoom(-B.ZOOM_STEP)} className="px-1.5 py-0.5 text-[11px]">-</HudChamferButton>
+		<div class="flex items-center gap-1 shrink-0 flex-nowrap">
+			<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} tip="Pan Left" onclick={() => stageCamRef?.panBy(-B.PAN_STEP_X, 0)} className="px-1.5 py-0.5 text-[0.6875rem]">←</HudChamferButton>
+			<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} tip="Pan Right" onclick={() => stageCamRef?.panBy(B.PAN_STEP_X, 0)} className="px-1.5 py-0.5 text-[0.6875rem]">→</HudChamferButton>
+			<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} tip="Zoom Out" onclick={() => stageCamRef?.stepZoom(-B.ZOOM_STEP)} className="px-1.5 py-0.5 text-[0.6875rem]">-</HudChamferButton>
 			<span class="px-1 tabular-nums">{Math.round(localCam.zoomScale * HUD_CONFIG.PERCENTAGE_MAX)}%</span>
-			<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} tip="Zoom In" onclick={() => stageCamRef?.stepZoom(B.ZOOM_STEP)} className="px-1.5 py-0.5 text-[11px]">+</HudChamferButton>
-			<HudChamferButton chamferCorner={CHAMFER_PROFILES.CORNER_TOP_RIGHT} cutPx={6} variant="accent" onclick={() => hudWire.triggerCanvasRecenter()} className="px-2.5 py-0.5 text-[11px]">Fit</HudChamferButton>
+			<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={5} tip="Zoom In" onclick={() => stageCamRef?.stepZoom(B.ZOOM_STEP)} className="px-1.5 py-0.5 text-[0.6875rem]">+</HudChamferButton>
+			<HudChamferButton chamferCorner={CHAMFER_PROFILES.CORNER_TOP_RIGHT} cutPx={6} variant="accent" onclick={() => hudWire.triggerCanvasRecenter()} className="px-2.5 py-0.5 text-[0.6875rem]">Fit</HudChamferButton>
 		</div>
 	</div>
 	{#if activeSubMode !== GRAPH_PROJECTIONS.BUTTERFLY}
@@ -96,9 +98,9 @@
 			<HudInteractiveCanvasStage boundsWidth={svgW} boundsHeight={svgH} nodeCount={1 + bf.afferentEntries.length + bf.efferentEntries.length} fitKey={`bf-${entityId}-${hudWire.butterflyMaxHops}-${nodes.length}`} {resetNonce} ariaLabel="Interactive Butterfly Graph Canvas" onStageReady={(c) => (stageCamRef = c)} onCameraChange={(c) => { localCam = c; onCameraChange?.(c); }}>
 				{#snippet children({ cam })}
 					<svg viewBox={`0 0 ${svgW} ${svgH}`} width={svgW} height={svgH} class="select-none" role="img" aria-label={`Butterfly dependency graph for ${bf.focalEntity.name}`}>
-						<text x={leftWingX - leftLaneW / 2} y="22" fill="var(--hud-nominal)" font-size="11" font-family="IBM Plex Mono" font-weight="600">◀ INBOUND CALLERS (Ca · H1-{hudWire.butterflyMaxHops})</text>
+						<text x={leftWingX - leftLaneW / 2} y="22" fill="var(--hud-nominal)" font-size="11" font-family="IBM Plex Mono" font-weight="600">◂ INBOUND CALLERS (Ca · H1-{hudWire.butterflyMaxHops})</text>
 						<text x={centerX - 68} y="22" fill="var(--hud-accent-secondary)" font-size="11" font-family="IBM Plex Mono" font-weight="600">{HUD_GLYPHS.FOCAL_RETICLE} FOCAL LOCK</text>
-						<text x={rightWingX - rightLaneW / 2} y="22" fill="var(--hud-accent-primary)" font-size="11" font-family="IBM Plex Mono" font-weight="600">OUTBOUND TARGETS (Ce · H1-{hudWire.butterflyMaxHops}) ▶</text>
+						<text x={rightWingX - rightLaneW / 2} y="22" fill="var(--hud-accent-primary)" font-size="11" font-family="IBM Plex Mono" font-weight="600">OUTBOUND TARGETS (Ce · H1-{hudWire.butterflyMaxHops}) ▸</text>
 						{#each bf.afferentLanes as lane (lane.moduleLabel + lane.yStart)}
 							<rect x={leftWingX - leftLaneW / 2 - 8} y={lane.yStart - 10} width={leftLaneW + 16} height={lane.height + 10} fill="var(--hud-surface)" fill-opacity="0.18" stroke="var(--hud-border)" stroke-dasharray="4 3" />
 							<text x={leftWingX - leftLaneW / 2 - 2} y={lane.yStart + 2} fill="var(--hud-muted)" font-size="10" font-family="IBM Plex Mono">{lane.moduleLabel}</text>
@@ -110,13 +112,13 @@
 						{#each bf.afferentEntries as item (item.node.id)}
 							{@const fullTitle = `H${item.hop} · ${item.node.name}`}{@const subLabel = `${item.edgeKind} ×${item.callCount} · v(G)=${item.node.cyclomatic}`}{@const nodeW = calcCartridgeWidth(fullTitle, subLabel, leftLaneW)}
 							<path d={buildCubicBezierPath({ x: leftWingX + nodeW / 2, y: item.y }, { x: centerX - focalW / 2, y: centerY })} fill="none" stroke={edgeColor(item.edgeKind)} stroke-width={1.5 + Math.min(2.5, item.callCount * 0.6)} stroke-dasharray={item.hop > 1 ? '4 4' : undefined} />
-							<HudEntityCartridge entityId={item.node.id} x={leftWingX - nodeW / 2} y={item.y - L.NODE_HALF_HEIGHT} width={nodeW} height={L.NODE_HEIGHT} title={fullTitle} subtitle={subLabel} strokeColor={nodeCompareStroke(item.node.qualifiedName, edgeColor(item.edgeKind))} railColor={edgeColor(item.edgeKind)} onSelect={() => onSelectNode(item.node.id)} />
+							<HudEntityCartridge entityId={item.node.id} x={leftWingX - nodeW / 2} y={item.y - L.NODE_HALF_HEIGHT} width={nodeW} height={L.NODE_HEIGHT} title={fullTitle} subtitle={subLabel} strokeColor={nodeCompareStroke(item.node.qualifiedName, edgeColor(item.edgeKind))} railColor={edgeColor(item.edgeKind)} onSelect={() => focusCartridge(item.node.id)} />
 						{/each}
-						<HudEntityCartridge entityId={bf.focalEntity.id} x={centerX - focalW / 2} y={centerY - L.FOCAL_HALF_HEIGHT} width={focalW} height={L.FOCAL_HEIGHT} chamfer={14} isFocal={true} badge={`${HUD_GLYPHS.FOCAL_RETICLE} FOCAL::${bf.focalEntity.kind}`} title={bf.focalEntity.name} subtitle={`LOC:${bf.focalEntity.loc} · v(G):${bf.focalEntity.cyclomatic} · V:${bf.focalEntity.halsteadVolume}`} strokeColor={nodeCompareStroke(bf.focalEntity.qualifiedName, 'var(--hud-accent-primary)')} railColor="var(--hud-accent-secondary)" onDoubleClick={() => cam.focusNodeAt(0, 0)} />
+						<HudEntityCartridge entityId={bf.focalEntity.id} x={centerX - focalW / 2} y={centerY - L.FOCAL_HALF_HEIGHT} width={focalW} height={L.FOCAL_HEIGHT} chamfer={14} isFocal={true} badge={`${HUD_GLYPHS.FOCAL_RETICLE} FOCAL::${bf.focalEntity.kind}`} title={bf.focalEntity.name} subtitle={`LOC:${bf.focalEntity.loc} · v(G):${bf.focalEntity.cyclomatic} · V:${bf.focalEntity.halsteadVolume}`} strokeColor={nodeCompareStroke(bf.focalEntity.qualifiedName, 'var(--hud-accent-primary)')} railColor="var(--hud-accent-secondary)" onSelect={() => focusCartridge(bf.focalEntity.id)} onDoubleClick={() => cam.focusNodeAt(0, 0)} />
 						{#each bf.efferentEntries as item (item.node.id)}
 							{@const fullTitle = `H${item.hop} · ${item.node.name}`}{@const subLabel = `${item.edgeKind} ×${item.callCount} · v(G)=${item.node.cyclomatic}`}{@const nodeW = calcCartridgeWidth(fullTitle, subLabel, rightLaneW)}
 							<path d={buildCubicBezierPath({ x: centerX + focalW / 2, y: centerY }, { x: rightWingX - nodeW / 2, y: item.y })} fill="none" stroke={edgeColor(item.edgeKind)} stroke-width={1.5 + Math.min(2.5, item.callCount * 0.6)} stroke-dasharray={item.hop > 1 ? '4 4' : undefined} />
-							<HudEntityCartridge entityId={item.node.id} x={rightWingX - nodeW / 2} y={item.y - L.NODE_HALF_HEIGHT} width={nodeW} height={L.NODE_HEIGHT} title={fullTitle} subtitle={subLabel} strokeColor={nodeCompareStroke(item.node.qualifiedName, edgeColor(item.edgeKind))} railColor={edgeColor(item.edgeKind)} onSelect={() => onSelectNode(item.node.id)} />
+							<HudEntityCartridge entityId={item.node.id} x={rightWingX - nodeW / 2} y={item.y - L.NODE_HALF_HEIGHT} width={nodeW} height={L.NODE_HEIGHT} title={fullTitle} subtitle={subLabel} strokeColor={nodeCompareStroke(item.node.qualifiedName, edgeColor(item.edgeKind))} railColor={edgeColor(item.edgeKind)} onSelect={() => focusCartridge(item.node.id)} />
 						{/each}
 						<g data-testid="butterfly-edge-pills">
 							{#each bf.afferentEntries as item (item.node.id)}

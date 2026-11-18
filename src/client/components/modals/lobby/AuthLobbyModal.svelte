@@ -6,7 +6,7 @@
 	import { onMount } from 'svelte';
 	import { KeyRound, LogOut } from 'lucide-svelte';
 	import { APP_METADATA, LOBBY_ENGAGEMENT_LOCK_MS } from '@config/constants';
-	import { AUTH_LOBBY_TITLE, CHAMFER_PROFILES } from '@config/hud.tokens';
+	import { AUTH_LOBBY_TITLE, CHAMFER_PROFILES, HUD_INTENT_KINDS } from '@config/hud.tokens';
 	import { PRINCIPAL_KINDS, PRINCIPAL_POSTURE_META, SEEDED_OPERATOR_CONFIG, type PrincipalKind } from '@config/security.constants';
 	import { hudWire, securityWire, validateClientForm } from '@client/state';
 	import HudChamferButton from '@client/components/atoms/HudChamferButton.svelte';
@@ -42,6 +42,7 @@
 	});
 
 	function triggerShake(): void { shakeForm = true; setTimeout(() => (shakeForm = false), 300); }
+	function selectLobbyTab(id: string): void { activeTab = id; hudWire.emitUiIntent(HUD_INTENT_KINDS.UI_TAB_SWITCH, 'APP_MODAL', { modal: 'AUTH_LOBBY', tab: id }); }
 	function fillSeededOperator(): void { username = SEEDED_OPERATOR_CONFIG.USERNAME; password = SEEDED_OPERATOR_CONFIG.DEFAULT_PASSWORD; statusNote = `Filled seeded operator (${SEEDED_OPERATOR_CONFIG.USERNAME})`; }
 	async function handleSignIn(): Promise<void> {
 		statusNote = ''; const v = validateClientForm('AUTH_LOGIN', { username, password });
@@ -62,17 +63,17 @@
 	}
 </script>
 
-<HudModalShell {isOpen} preventDismiss={isLocked} ariaLabel={AUTH_LOBBY_TITLE} maxWidthClass="max-w-6xl" {onClose}>
+<HudModalShell {isOpen} preventDismiss={isLocked} transitionKey={activeTab} ariaLabel={AUTH_LOBBY_TITLE} maxWidthClass="max-w-6xl" {onClose}>
 	{#snippet header()}
 		<HudModalHeader title={AUTH_LOBBY_TITLE} subtitle={lobbySubtitle} preventDismiss={isLocked} dismissRemainingMs={lockRemainingMs} {onClose}>
-			{#snippet tabs()}<HudSubTabBar items={SUB_TABS} activeId={activeTab} ariaLabel="Auth Lobby Sub-Tabs" onSelect={(id) => (activeTab = id)} />{/snippet}
+			{#snippet tabs()}<HudSubTabBar items={SUB_TABS} activeId={activeTab} ariaLabel="Auth Lobby Sub-Tabs" onSelect={selectLobbyTab} />{/snippet}
 		</HudModalHeader>
 	{/snippet}
 
 	<div class={`flex-1 min-h-0 flex flex-col gap-3 font-mono text-[13px] leading-5 ${shakeForm ? 'hud-form-shake' : ''}`}>
 		{#if activeTab === 'SIGN_IN'}
 			<div data-testid="welcome-lobby-entry-paths" class="flex-1 min-h-0 flex flex-col justify-center">
-				<AuthBentoMissionDeck onStartTour={() => { hudWire.startInteractiveTour(); onClose(); }} onSkipTour={() => { hudWire.unfoldPermittedHudZones(); onClose(); }}>
+				<AuthBentoMissionDeck onStartTour={() => hudWire.startInteractiveTour()} onSkipTour={() => hudWire.unfoldPermittedHudZones()}>
 					{#snippet signInCard()}
 						<AuthSignInBentoCard
 							{username}

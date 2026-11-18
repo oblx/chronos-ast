@@ -5,25 +5,23 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { createStructuredDeviationMetadata, type DeviationTemplateId } from '@config/registries/annotation.templates';
-	import { API_ROUTES, APP_METADATA, GRAPH_ENGINES, GRAPH_PROJECTIONS, HUD_CONFIG, HUD_VIEWS, WORKSPACE_DEFAULTS, type ExportFormat, type GraphEngineMode, type GraphProjectionMode } from '@config/constants';
+	import { API_ROUTES, APP_METADATA, GRAPH_ENGINES, GRAPH_PROJECTIONS, HUD_CONFIG, HUD_VIEWS, type ExportFormat, type GraphEngineMode, type GraphProjectionMode } from '@config/constants';
 	import { HUD_DISCLOSURE_TIERS, HUD_MODALS, type StationActionKind } from '@config/hud.events';
-	import { EDGE_DRAWER_MODES, HUD_ZONE_VISIBILITY, HUD_ZONES } from '@config/hud.tokens';
+	import { EDGE_DRAWER_MODES, HUD_INTENT_KINDS, HUD_ZONE_VISIBILITY, HUD_ZONES } from '@config/hud.tokens';
 	import { resolveEntitySourceSlice, type AnnotationKind } from '@config/metamodel.constants';
 	import { RULE_SEVERITIES } from '@config/registries/rules.registry';
 	import { PRINCIPAL_KINDS } from '@config/security.constants';
 	import {
 		Island, buildHudExportPayload, clientDagKernel, computeBetweennessCentrality, computeChidamberKemererSuite,
 		computeEntityLcom4FromGraph, computeTarjanScc, diffWorkspaceSnapshots, evaluateWorkspaceCodeCheck,
-		executeTwinClientIntent, hudWire, importSarif210Diagnostics, navigationSync, securityWire, subscribeWorkspaceDomainEvents, wsClient,
+		executeTwinClientIntent, helpContext, hudWire, importSarif210Diagnostics, navigationSync, securityWire, subscribeWorkspaceDomainEvents, wsClient,
 		type AuditAnnotationRecord, type CodeCheckViolation, type SourceFileUnit, type WorkspaceSnapshot, type WorkspaceTabDescriptor,
 	} from '@client/state';
-	import GamificationOverlays from '@client/components/molecules/gamification/GamificationOverlays.svelte';
-	import WorldAtmosphere from '@client/components/atoms/fx/WorldAtmosphere.svelte';
+	import GamificationOverlays from '@client/components/molecules/gamification/GamificationOverlays.svelte'; import WorldAtmosphere from '@client/components/atoms/fx/WorldAtmosphere.svelte';
 	import HudAlignmentGuides from '@client/components/atoms/HudAlignmentGuides.svelte'; import HudCyberTooltip from '@client/components/atoms/HudCyberTooltip.svelte';
-	import HudParticleEmitter from '@client/components/atoms/fx/HudParticleEmitter.svelte';
-	import HudGuestTutorialQuest from '@client/components/molecules/overlays/HudGuestTutorialQuest.svelte';
+	import HudParticleEmitter from '@client/components/atoms/fx/HudParticleEmitter.svelte'; import HudGuestTutorialQuest from '@client/components/molecules/overlays/HudGuestTutorialQuest.svelte';
 	import CompareStagingTray from '@client/components/molecules/overlays/CompareStagingTray.svelte';
-	import HudTopBarZones from '@client/components/zones/HudTopBarZones.svelte'; import ProjectTabDeck from '@client/components/zones/ProjectTabDeck.svelte';
+	import HudTopBarZones from '@client/components/zones/HudTopBarZones.svelte';
 	import HudCompactOverflowDrawer from '@client/components/zones/HudCompactOverflowDrawer.svelte';
 	import HudLeftEdgeZone from '@client/components/zones/HudLeftEdgeZone.svelte'; import HudRightEdgeZone from '@client/components/zones/HudRightEdgeZone.svelte';
 	import HudBottomDockZones from '@client/components/zones/HudBottomDockZones.svelte'; import HudIdleCommandBay from '@client/components/zones/HudIdleCommandBay.svelte';
@@ -31,19 +29,19 @@
 	import ButterflyGraph from '@client/components/organisms/projections/ButterflyGraph.svelte'; import ControlFlowCanvas from '@client/components/organisms/projections/ControlFlowCanvas.svelte';
 	import DataFlowCanvas from '@client/components/organisms/projections/DataFlowCanvas.svelte'; import TreemapCanvas from '@client/components/organisms/projections/TreemapCanvas.svelte';
 	import DsmMatrix from '@client/components/organisms/projections/DsmMatrix.svelte'; import MermaidStudioCanvas from '@client/components/organisms/projections/MermaidStudioCanvas.svelte';
-	import TelemetryTerminal from '@client/components/organisms/perimeter/TelemetryTerminal.svelte';
+	import TelemetryTerminal from '@client/components/organisms/perimeter/TelemetryTerminal.svelte'; import { UI_SPOTLIGHT_TARGETS, uiSpotlight } from '@ui';
 
 	interface Props {
 		tabs: readonly WorkspaceTabDescriptor[]; activeTabId: string; selectedEntityId: number; isAnalyzing: boolean; statusBanner: string;
 		onSelectTab: (tabId: string) => void; onCloseTab: (tabId: string) => void; onOpenPreset: () => Promise<void>; onOpenProject?: (projectKey: string) => Promise<void>; onSaveWorkspace: () => Promise<void>;
 		onImportBundleJson: (rawJson: string) => Promise<void>; onUploadZipBytes: (zipBytes: Uint8Array, workspaceName: string) => Promise<void>; onUploadSourceFiles: (workspaceName: string, files: readonly SourceFileUnit[]) => Promise<void>;
-		onIngestSampleZip: () => Promise<void>; onIngestRemoteUrl: (url: string, workspaceName?: string) => Promise<void>; onIngestGitRepo?: (repoUrl: string, branch?: string, secretId?: string) => Promise<void>;
+		onIngestSampleZip: () => Promise<void>; onIngestRemoteUrl: (url: string, workspaceName?: string) => Promise<void>; onIngestGitRepo?: (repoUrl: string, branch?: string, secretId?: string) => Promise<void>; onIngestLocalSelf?: (workspaceName?: string) => Promise<void>;
 		onExportBundle: () => Promise<string>; onSelectEntity: (id: number) => void; onAnalyzeSource: (filePath: string, sourceCode: string) => Promise<void>; onReindexWorkspace: () => Promise<void>;
 	}
 	const EMPTY_SNAPSHOT: WorkspaceSnapshot = { indexedFilesCount: 0, workerDurationMicros: 0, hasCycles: false, nodes: [], edges: [], sourceMap: {} };
-	let { tabs, activeTabId, selectedEntityId, isAnalyzing, statusBanner, onSelectTab, onCloseTab, onOpenPreset, onOpenProject, onSaveWorkspace, onImportBundleJson, onUploadZipBytes, onUploadSourceFiles, onIngestSampleZip, onIngestRemoteUrl, onIngestGitRepo = async () => {}, onExportBundle, onSelectEntity, onAnalyzeSource, onReindexWorkspace }: Props = $props();
+	let { tabs, activeTabId, selectedEntityId, isAnalyzing, statusBanner, onSelectTab, onCloseTab, onOpenPreset, onOpenProject, onSaveWorkspace, onImportBundleJson, onUploadZipBytes, onUploadSourceFiles, onIngestSampleZip, onIngestRemoteUrl, onIngestGitRepo = async () => {}, onIngestLocalSelf = async () => {}, onExportBundle, onSelectEntity, onAnalyzeSource, onReindexWorkspace }: Props = $props();
 	let graphEngine = $state<GraphEngineMode>(GRAPH_ENGINES.SQLITE_LOCAL), modalExportJson = $state(''), exportedPayloadPreview = $state(''), activeGraphProjection = $state<GraphProjectionMode>(GRAPH_PROJECTIONS.BUTTERFLY), useHisSafetyProfile = $state(false);
-	let baselineSnapshot = $state.raw<WorkspaceSnapshot | null>(null), auditAnnotations = $state.raw<AuditAnnotationRecord[]>([]), sarifViolations = $state.raw<CodeCheckViolation[]>([]), providerUrl = $state(''), providerBearer = $state(''), searchQuery = $state(''), activeKindFilter = $state<string>(WORKSPACE_DEFAULTS.FILTER_ALL), camera = $state({ panX: 0, panY: 0, zoomScale: 1 });
+	let baselineSnapshot = $state.raw<WorkspaceSnapshot | null>(null), auditAnnotations = $state.raw<AuditAnnotationRecord[]>([]), sarifViolations = $state.raw<CodeCheckViolation[]>([]), providerUrl = $state(''), providerBearer = $state(''), searchQuery = $state(''), camera = $state({ panX: 0, panY: 0, zoomScale: 1 });
 	let isGuest = $derived(securityWire.principalKind === PRINCIPAL_KINDS.GUEST);
 	let activeTab = $derived(tabs.find((t) => t.id === activeTabId) ?? tabs[0]), snapshot = $derived(activeTab?.snapshot ?? EMPTY_SNAPSHOT);
 	let diffReport = $derived(baselineSnapshot && activeTab ? diffWorkspaceSnapshots(baselineSnapshot, snapshot) : null);
@@ -55,10 +53,11 @@
 	let centralityMap = $derived(graphEngine === GRAPH_ENGINES.MEMGRAPH_BOLT ? computeBetweennessCentrality(snapshot.nodes, snapshot.edges) : {});
 	let activeCentrality = $derived(activeEntity ? Math.round((centralityMap[activeEntity.id] ?? 0) * 100) / 100 : 0);
 	let activeSourceCode = $derived(activeEntity ? resolveEntitySourceSlice(activeEntity.qualifiedName, snapshot.sourceMap, `// Entity: ${activeEntity.qualifiedName}`) : '');
-	let canvasPadClass = $derived(hudWire.isStealthMode ? 'p-4' : `pt-[88px] pb-[156px] hud-world-safe-corridor ${!isGuest && hudWire.edgeDrawerMode !== EDGE_DRAWER_MODES.OVERLAY_HOVER && hudWire.zoneStates[HUD_ZONES.LEFT_EDGE] === HUD_ZONE_VISIBILITY.OPEN ? 'md:pl-[calc(var(--hud-rail-collapsed-w)+var(--hud-edge-track-w)+1.75rem)]' : ''} ${!isGuest && hudWire.edgeDrawerMode !== EDGE_DRAWER_MODES.OVERLAY_HOVER && hudWire.zoneStates[HUD_ZONES.RIGHT_EDGE] === HUD_ZONE_VISIBILITY.OPEN ? 'md:pr-[calc(var(--hud-rail-collapsed-w)+var(--hud-edge-track-w)+1.75rem)]' : ''}`);
+	let canvasPadClass = $derived(hudWire.isStealthMode ? 'p-4' : `pt-[118px] pb-[156px] hud-world-safe-corridor ${!isGuest && hudWire.edgeDrawerMode !== EDGE_DRAWER_MODES.OVERLAY_HOVER && hudWire.zoneStates[HUD_ZONES.LEFT_EDGE] === HUD_ZONE_VISIBILITY.OPEN ? 'md:pl-[calc(var(--hud-rail-collapsed-w)+var(--hud-edge-track-w)+1.75rem)]' : ''} ${!isGuest && hudWire.edgeDrawerMode !== EDGE_DRAWER_MODES.OVERLAY_HOVER && hudWire.zoneStates[HUD_ZONES.RIGHT_EDGE] === HUD_ZONE_VISIBILITY.OPEN ? 'md:pr-[calc(var(--hud-rail-collapsed-w)+var(--hud-edge-track-w)+1.75rem)]' : ''}`);
 
 	clientDagKernel.bindHooks(() => securityWire.buildHeaders(), (tag, msg) => hudWire.pushTicker(tag, msg));
-	$effect(() => { const fmt = hudWire.requestedExportFormat; if (fmt) { hudWire.requestedExportFormat = ''; void handleExport(fmt as ExportFormat); } });
+	$effect(() => { helpContext.syncContext({ activeView: hudWire.activeView, activeModal: hudWire.activeModal, kineticMotionEnabled: hudWire.kineticMotionEnabled, rightTab: hudWire.rightEdgeActiveTab, leftTab: hudWire.leftEdgeActiveTab }); });
+	$effect(() => { const fmt = hudWire.consumeRequestedExport(); if (fmt) void handleExport(fmt as ExportFormat); });
 	$effect(() => { const _uid = securityWire.uid; const _tok = securityWire.accessToken; if (_uid > 0 && wsClient.status === 'CONNECTED') wsClient.connectWorkspace(activeTabId || 'chronos-core', activeEntity?.id ?? null); });
 	$effect(() => {
 		wsClient.registerTwinExecutor((intent) => executeTwinClientIntent(intent, { onOpenProject, onSelectTab, onSelectEntity, hasTab: (k) => tabs.some((t) => t.id === k || t.slug === k), onSwitchProjection: (view) => executeStationAction({ type: 'VIEW', view }) }));
@@ -77,7 +76,7 @@
 		if (e.altKey && e.key.toLowerCase() === 'g') { e.preventDefault(); hudWire.toggleAlignmentGuides(); return; }
 		if (e.key === 'Escape') { if (hudWire.activeModal === HUD_MODALS.AUTH_LOBBY || (hudWire.tourActive && isGuest)) { e.preventDefault(); hudWire.unfoldPermittedHudZones(); return; } if (hudWire.activeModal !== HUD_MODALS.NONE) { hudWire.closeModal(); return; } }
 		if (inInput) return;
-		if (e.key === '?' || e.key === 'F1') { e.preventDefault(); hudWire.openModal(hudWire.activeModal === HUD_MODALS.SSOT_HELP_BOOK ? HUD_MODALS.NONE : HUD_MODALS.SSOT_HELP_BOOK); }
+		if (e.key === '?' || e.key === 'F1') { e.preventDefault(); if (hudWire.activeModal === HUD_MODALS.SSOT_HELP_BOOK) hudWire.closeModal(); else hudWire.openContextualHelp(helpContext.current); }
 		else if (!isGuest && (e.key === 's' || e.key === 'S') && !e.ctrlKey && !e.metaKey) { e.preventDefault(); hudWire.openModal(hudWire.activeModal === HUD_MODALS.STATIONS_LAUNCHER ? HUD_MODALS.NONE : HUD_MODALS.STATIONS_LAUNCHER); }
 		else if ((e.key === 'f' || e.key === 'F' || e.key === '0') && !e.ctrlKey && !e.metaKey) { e.preventDefault(); hudWire.triggerCanvasRecenter(); }
 		else if ((e.key === 'Tab' || e.key === 'z' || e.key === 'Z') && hudWire.activeModal === HUD_MODALS.NONE && !e.ctrlKey && !e.metaKey) { e.preventDefault(); hudWire.toggleStealth(); }
@@ -106,35 +105,43 @@
 		else if (action.type === 'EXPORT') void handleExport(action.format);
 		else if (action.type === 'STEALTH') hudWire.toggleStealth();
 		else if (action.type === 'OPEN_PRESET') void onOpenPreset();
-		else if (action.type === 'PIN_COMPARE' && activeTab) { baselineSnapshot = snapshot; hudWire.pushTicker('DELTA', 'Pinned comparison baseline'); }
+		else if (action.type === 'PIN_COMPARE' && activeTab) toggleCompareSnapshot(true);
 		else if (action.type === 'ENGINE_TOGGLE') void toggleGraphEngine();
 		else if (action.type === 'REINDEX') void onReindexWorkspace();
 	}
+	function selectCanvasEntity(id: number): void { onSelectEntity(id); navigationSync.selectEntity(id, activeEntity?.qualifiedName ?? null); wsClient.sendFocalLock(id); }
+	function handleCameraChange(c: { panX: number; panY: number; zoomScale: number }): void { camera = c; navigationSync.recordCamera(hudWire.activeView, c.panX, c.panY, c.zoomScale); }
+	function toggleCompareSnapshot(pinOnly?: boolean): void { baselineSnapshot = pinOnly ? snapshot : baselineSnapshot ? null : snapshot; hudWire.emitUiIntent(baselineSnapshot ? HUD_INTENT_KINDS.COMPARE_PIN_BASELINE : HUD_INTENT_KINDS.COMPARE_CLEAR_BASELINE, 'WORLD_CANVAS', { active: Boolean(baselineSnapshot) }); if (pinOnly) hudWire.pushTicker('DELTA', 'Pinned comparison baseline'); }
+	function toggleHisProfile(): void { useHisSafetyProfile = !useHisSafetyProfile; hudWire.emitUiIntent(HUD_INTENT_KINDS.PROJECTION_OPTION_TOGGLE, 'RIGHT_EDGE', { useHisSafetyProfile }); }
+	function importSarifJson(raw: string): void { try { sarifViolations = [...sarifViolations, ...importSarif210Diagnostics(raw, snapshot.nodes)]; } catch {} }
+	function saveAiConfig(url: string, bearer: string): void { providerUrl = url; providerBearer = bearer; hudWire.closeModal(); }
+	function openWorkspaceIngest(): void { modalExportJson = ''; hudWire.openModal(HUD_MODALS.WORKSPACE_INGEST); }
+	async function exportBundleModal(): Promise<void> { modalExportJson = await onExportBundle(); hudWire.openModal(HUD_MODALS.WORKSPACE_INGEST); }
+	function setKindFilter(k: string): void { if (hudWire.leftEdgeKindFilter !== k) hudWire.setLeftKindFilter(k); }
 </script>
 <svelte:window onkeydown={handleKeydown} />
 <div data-hud-theme={hudWire.activeThemeId} data-hud-motion={hudWire.kineticMotionEnabled ? 'ACTIVE' : 'REDUCED'} class="fixed inset-0 overflow-hidden bg-[var(--hud-bg)] text-[var(--hud-text)] select-none">
 	<WorldAtmosphere />
-	<main data-hud-zone="WORLD_CANVAS" data-help-target="PRIMARY_CANVAS" class={`fixed inset-0 z-10 flex flex-col transition-transform duration-300 ${hudWire.activeModal !== HUD_MODALS.NONE ? 'scale-[0.985]' : 'scale-100'} ${activeTab && activeEntity ? canvasPadClass : 'items-center justify-center p-6'}`}>
+	<main use:uiSpotlight={UI_SPOTLIGHT_TARGETS.WORLD_CANVAS} data-hud-zone="WORLD_CANVAS" data-help-target="PRIMARY_CANVAS" class={`fixed inset-0 z-10 flex flex-col transition-transform duration-300 ${hudWire.activeModal !== HUD_MODALS.NONE ? 'scale-[0.985]' : 'scale-100'} ${activeTab && activeEntity ? canvasPadClass : 'items-center justify-center p-6'}`}>
 		{#if activeTab && activeEntity}
 			<Island id="chronos-primary-viewport" label="ISLAND_HYDRATED">
-				{#if hudWire.activeView === HUD_VIEWS.CODEMAP}<CodemapCanvas nodes={snapshot.nodes} edges={snapshot.edges} selectedEntityId={activeEntity.id} cyclicEntityIds={sccReport.cyclicEntityIds} onSelectEntity={(id) => { onSelectEntity(id); navigationSync.selectEntity(id, activeEntity?.qualifiedName ?? null); wsClient.sendFocalLock(id); }} onSelectGraphProjection={(m) => (activeGraphProjection = m)} />
-				{:else if hudWire.activeView === HUD_VIEWS.BUTTERFLY || hudWire.activeView === HUD_VIEWS.UML_CLASS || hudWire.activeView === HUD_VIEWS.UML_SEQUENCE || hudWire.activeView === HUD_VIEWS.SHARED_OBJECTS}<ButterflyGraph entityId={activeEntity.id} nodes={snapshot.nodes} edges={snapshot.edges} projectionMode={hudWire.activeView === HUD_VIEWS.UML_CLASS || hudWire.activeView === HUD_VIEWS.UML_SEQUENCE || hudWire.activeView === HUD_VIEWS.SHARED_OBJECTS ? hudWire.activeView : activeGraphProjection} {diffReport} resetNonce={hudWire.canvasResetNonce} onToggleCompare={() => (baselineSnapshot = baselineSnapshot ? null : snapshot)} onSelectNode={(id) => { onSelectEntity(id); navigationSync.selectEntity(id, activeEntity?.qualifiedName ?? null); wsClient.sendFocalLock(id); }} onCameraChange={(c) => { camera = c; navigationSync.recordCamera(hudWire.activeView, c.panX, c.panY, c.zoomScale); }} />
+				{#if hudWire.activeView === HUD_VIEWS.CODEMAP}<CodemapCanvas nodes={snapshot.nodes} edges={snapshot.edges} selectedEntityId={activeEntity.id} cyclicEntityIds={sccReport.cyclicEntityIds} onSelectEntity={selectCanvasEntity} onSelectGraphProjection={(m) => (activeGraphProjection = m)} />
+				{:else if hudWire.activeView === HUD_VIEWS.BUTTERFLY || hudWire.activeView === HUD_VIEWS.UML_CLASS || hudWire.activeView === HUD_VIEWS.UML_SEQUENCE || hudWire.activeView === HUD_VIEWS.SHARED_OBJECTS}<ButterflyGraph entityId={activeEntity.id} nodes={snapshot.nodes} edges={snapshot.edges} projectionMode={hudWire.activeView === HUD_VIEWS.UML_CLASS || hudWire.activeView === HUD_VIEWS.UML_SEQUENCE || hudWire.activeView === HUD_VIEWS.SHARED_OBJECTS ? hudWire.activeView : activeGraphProjection} {diffReport} resetNonce={hudWire.canvasResetNonce} onToggleCompare={toggleCompareSnapshot} onSelectNode={selectCanvasEntity} onCameraChange={handleCameraChange} />
 				{:else if hudWire.activeView === HUD_VIEWS.CONTROL_FLOW}<ControlFlowCanvas entity={activeEntity} sourceCode={activeSourceCode} nodes={snapshot.nodes} edges={snapshot.edges} sourceMap={snapshot.sourceMap} violations={codeCheck.violations} {onSelectEntity} />
 				{:else if hudWire.activeView === HUD_VIEWS.DATA_FLOW}<DataFlowCanvas entity={activeEntity} sourceCode={activeSourceCode} nodes={snapshot.nodes} edges={snapshot.edges} sourceMap={snapshot.sourceMap} violations={codeCheck.violations} {onSelectEntity} />
 				{:else if hudWire.activeView === HUD_VIEWS.MERMAID}<MermaidStudioCanvas focalEntity={activeEntity} nodes={snapshot.nodes} edges={snapshot.edges} sourceMap={snapshot.sourceMap} {onSelectEntity} />
-				{:else if hudWire.activeView === HUD_VIEWS.TREEMAP}<TreemapCanvas nodes={snapshot.nodes} violationMap={codeCheck.violationCountByEntityId} selectedEntityId={activeEntity.id} {diffReport} onToggleCompare={() => (baselineSnapshot = baselineSnapshot ? null : snapshot)} onSelectNode={onSelectEntity} />
+				{:else if hudWire.activeView === HUD_VIEWS.TREEMAP}<TreemapCanvas nodes={snapshot.nodes} violationMap={codeCheck.violationCountByEntityId} selectedEntityId={activeEntity.id} {diffReport} onToggleCompare={toggleCompareSnapshot} onSelectNode={onSelectEntity} />
 				{:else if hudWire.activeView === HUD_VIEWS.DSM || hudWire.activeView === HUD_VIEWS.MATRIX}<DsmMatrix nodes={snapshot.nodes} edges={snapshot.edges} selectedEntityId={activeEntity.id} onSelectNode={onSelectEntity} />
 				{:else}<TelemetryTerminal entity={activeEntity} sourceCode={activeSourceCode} nodes={snapshot.nodes} violations={codeCheck.violations} {onSelectEntity} {isAnalyzing} {onAnalyzeSource} />{/if}
 			</Island>
-		{:else}<HudIdleCommandBay {statusBanner} onOpenIngest={() => { modalExportJson = ''; hudWire.openModal(HUD_MODALS.WORKSPACE_INGEST); }} {onOpenPreset} {onIngestSampleZip} />{/if}
+		{:else}<HudIdleCommandBay {statusBanner} onOpenIngest={openWorkspaceIngest} {onOpenPreset} {onIngestSampleZip} />{/if}
 	</main>
-	<HudTopBarZones {tabs} {activeTabId} {activeEntity} indexedFilesCount={snapshot.indexedFilesCount} entityCount={snapshot.nodes.length} {blockerCount} {criticalCount} {warningCount} {isAnalyzing} {graphEngine} {activeGraphProjection} onToggleEngine={toggleGraphEngine} {onReindexWorkspace} onSelectGraphProjection={(m) => (activeGraphProjection = m)} />
-	{#if !hudWire.isStealthMode && !hudWire.isZoneFolded(HUD_ZONES.TOP_CENTER)}<ProjectTabDeck {tabs} {activeTabId} {onSelectTab} {onCloseTab} {onOpenPreset} />{/if}
+	<HudTopBarZones {tabs} {activeTabId} {activeEntity} indexedFilesCount={snapshot.indexedFilesCount} entityCount={snapshot.nodes.length} {blockerCount} {criticalCount} {warningCount} {isAnalyzing} {graphEngine} {activeGraphProjection} onToggleEngine={toggleGraphEngine} {onReindexWorkspace} onSelectGraphProjection={(m) => (activeGraphProjection = m)} {onSelectTab} {onCloseTab} {onOpenPreset} {onOpenProject} />
 	<HudGuestTutorialQuest /><HudCompactOverflowDrawer onSelectGraphProjection={(m) => (activeGraphProjection = m)} {onReindexWorkspace} />
-	{#if activeTab && activeEntity && (!isGuest || !hudWire.isZoneFolded(HUD_ZONES.LEFT_EDGE))}<HudLeftEdgeZone entities={snapshot.nodes} selectedEntityId={activeEntity.id} {searchQuery} {activeKindFilter} {ckMap} cyclicIds={sccReport.cyclicEntityIds} violationMap={codeCheck.violationCountByEntityId} {onSelectEntity} onSearchChange={(q) => (searchQuery = q)} onKindChange={(k) => (activeKindFilter = k)} /><HudRightEdgeZone entity={activeEntity} nodes={snapshot.nodes} edges={snapshot.edges} ckMetrics={ckMap[activeEntity.id]} lcomScore={activeLcomScore} sourceByteLength={activeSourceCode.length} violations={codeCheck.violations} suppressedCount={codeCheck.suppressedCount} {useHisSafetyProfile} {auditAnnotations} {graphEngine} {activeCentrality} {exportedPayloadPreview} {onSelectEntity} onToggleHisProfile={() => (useHisSafetyProfile = !useHisSafetyProfile)} onImportSarifJson={(raw) => { try { sarifViolations = [...sarifViolations, ...importSarif210Diagnostics(raw, snapshot.nodes)]; } catch {} }} onExport={handleExport} onClearExportPreview={() => (exportedPayloadPreview = '')} onAddAnnotation={handleAddAnnotation} />{/if}
-	{#if !isGuest}<CompareStagingTray {diffReport} baselineLabel={activeTab?.shortCode ?? 'Baseline'} onClearBaseline={() => (baselineSnapshot = null)} />{/if}
-	<HudBottomDockZones nodes={snapshot.nodes} focalEntity={activeEntity} focalEntityId={activeEntity?.id ?? 1} hasWorkspace={Boolean(activeTab && activeEntity)} hasBaseline={Boolean(baselineSnapshot)} hasCycles={snapshot.hasCycles} violationCount={codeCheck.violations.length} {providerUrl} {providerBearer} {diffReport} {statusBanner} {camera} onSelectNode={onSelectEntity} onPinBaseline={() => (baselineSnapshot = snapshot)} onClearBaseline={() => (baselineSnapshot = null)} {onSaveWorkspace} onExportBundle={async () => { modalExportJson = await onExportBundle(); hudWire.openModal(HUD_MODALS.WORKSPACE_INGEST); }} />
+	{#if activeTab && activeEntity && (!isGuest || !hudWire.isZoneFolded(HUD_ZONES.LEFT_EDGE))}<HudLeftEdgeZone entities={snapshot.nodes} selectedEntityId={activeEntity.id} {searchQuery} activeKindFilter={hudWire.leftEdgeKindFilter} {ckMap} cyclicIds={sccReport.cyclicEntityIds} violationMap={codeCheck.violationCountByEntityId} {onSelectEntity} onSearchChange={(q) => (searchQuery = q)} onKindChange={setKindFilter} /><HudRightEdgeZone entity={activeEntity} nodes={snapshot.nodes} edges={snapshot.edges} ckMetrics={ckMap[activeEntity.id]} lcomScore={activeLcomScore} sourceByteLength={activeSourceCode.length} violations={codeCheck.violations} suppressedCount={codeCheck.suppressedCount} {useHisSafetyProfile} {auditAnnotations} {graphEngine} {activeCentrality} {exportedPayloadPreview} {onSelectEntity} onToggleHisProfile={toggleHisProfile} onImportSarifJson={importSarifJson} onExport={handleExport} onClearExportPreview={() => (exportedPayloadPreview = '')} onAddAnnotation={handleAddAnnotation} />{/if}
+	{#if !isGuest}<CompareStagingTray {diffReport} baselineLabel={activeTab?.shortCode ?? 'Baseline'} onClearBaseline={() => toggleCompareSnapshot(false)} />{/if}
+	<HudBottomDockZones nodes={snapshot.nodes} focalEntity={activeEntity} focalEntityId={activeEntity?.id ?? 1} hasWorkspace={Boolean(activeTab && activeEntity)} hasBaseline={Boolean(baselineSnapshot)} hasCycles={snapshot.hasCycles} violationCount={codeCheck.violations.length} {providerUrl} {providerBearer} {diffReport} {statusBanner} {camera} onSelectNode={onSelectEntity} onPinBaseline={() => toggleCompareSnapshot(true)} onClearBaseline={() => toggleCompareSnapshot(false)} {onSaveWorkspace} onExportBundle={exportBundleModal} />
 	<HudAlignmentGuides /><HudParticleEmitter /><GamificationOverlays />
 	{#if hudWire.isStealthMode}<button type="button" onclick={() => hudWire.toggleStealth()} class="fixed bottom-4 right-4 z-30 px-3 py-1.5 font-mono text-[11px] hud-z2-dock border border-[var(--hud-brass)] text-[var(--hud-accent)] cursor-pointer hud-glint-trigger">Restore HUD [Z]</button>{/if}
-	<HudModalsLayer {activeEntity} nodes={snapshot.nodes} sourceMap={snapshot.sourceMap} workspaceIds={tabs.map((t) => t.id)} {modalExportJson} {providerUrl} {providerBearer} {graphEngine} {useHisSafetyProfile} {onSelectEntity} onExecuteStationAction={executeStationAction} onAddAnnotation={handleAddAnnotation} {onImportBundleJson} {onUploadZipBytes} {onUploadSourceFiles} {onIngestSampleZip} {onIngestRemoteUrl} {onIngestGitRepo} onSaveAiConfig={(url, bearer) => { providerUrl = url; providerBearer = bearer; hudWire.closeModal(); }} onToggleEngine={toggleGraphEngine} onToggleHisProfile={() => (useHisSafetyProfile = !useHisSafetyProfile)} {onReindexWorkspace} /><HudCyberTooltip />
+	<HudModalsLayer {activeEntity} nodes={snapshot.nodes} sourceMap={snapshot.sourceMap} workspaceIds={tabs.map((t) => t.id)} {modalExportJson} {providerUrl} {providerBearer} {graphEngine} {useHisSafetyProfile} {onSelectEntity} onExecuteStationAction={executeStationAction} onAddAnnotation={handleAddAnnotation} {onImportBundleJson} {onUploadZipBytes} {onUploadSourceFiles} {onIngestSampleZip} {onIngestRemoteUrl} {onIngestGitRepo} {onIngestLocalSelf} onSaveAiConfig={saveAiConfig} onToggleEngine={toggleGraphEngine} onToggleHisProfile={toggleHisProfile} {onReindexWorkspace} /><HudCyberTooltip />
 </div>

@@ -4,6 +4,11 @@
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import {
+		ZONE_CORNER_TUPLES, buildCornerPolygonPoints, buildHullClipPath,
+		resolveChamferCutPx, resolveEffectiveCornerTuple,
+	} from '@config/hud.tokens';
+	import { hudWire } from '@client/state/hud.wire.svelte';
 
 	let tipText = $state('');
 	let tipKey = $state('');
@@ -90,16 +95,19 @@
 		};
 	});
 
-	let cut = 5;
-	let polyPts = $derived(`${cut},0 ${boxW - cut},0 ${boxW},${cut} ${boxW},${boxH - cut} ${boxW - cut},${boxH} ${cut},${boxH} 0,${boxH - cut} 0,${cut}`);
+	let effectiveTuple = $derived(resolveEffectiveCornerTuple({ cornerStyle: hudWire.cornerStyle, explicitCorners: ZONE_CORNER_TUPLES.PERIMETER_CHAMFER }));
+	let cut = $derived(resolveChamferCutPx(boxW, boxH, 5, hudWire.fontScalePct, hudWire.cornerStyle, 3));
+	let polyPts = $derived(buildCornerPolygonPoints(boxW, boxH, 0.5, effectiveTuple, cut));
+	let hullClipStyle = $derived(buildHullClipPath(effectiveTuple, cut, 0));
 </script>
 
 {#if visible}
 	<div
 		bind:this={boxEl}
 		data-testid="hud-cyber-tooltip"
+		data-corner-style={hudWire.cornerStyle}
 		role="tooltip"
-		style={`left:${posX}px; top:${posY}px; clip-path: polygon(${cut}px 0, calc(100% - ${cut}px) 0, 100% ${cut}px, 100% calc(100% - ${cut}px), calc(100% - ${cut}px) 100%, ${cut}px 100%, 0 calc(100% - ${cut}px), 0 ${cut}px);`}
+		style={`left:${posX}px; top:${posY}px; ${hullClipStyle}`}
 		class="fixed z-[95] pointer-events-none max-w-[280px] px-3 py-1.5 bg-[var(--hud-panel)] text-[var(--hud-text-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.55)]"
 	>
 		<svg class="absolute inset-0 w-full h-full pointer-events-none z-20" viewBox={`0 0 ${Math.max(10, boxW)} ${Math.max(10, boxH)}`} preserveAspectRatio="none" aria-hidden="true">

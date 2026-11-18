@@ -6,8 +6,7 @@ import { API_ROUTES } from '@config/constants';
 import { CAPABILITY_BITS } from '@config/security.constants';
 import { calculateLevelFromXp } from '@core/gamification/xp.curve';
 import { defaultGamificationInterceptor } from '@plugins/gamification/gamification.interceptor';
-import { parseSafeJson } from '@lib/utils/log.sanitizer';
-import { badRequestResponse, okResponse, requireCapability, type ApiResponseEnvelope, type RequestPrincipal } from '../http/middleware';
+import { badRequestResponse, okResponse, parseBodyObject, runCapabilityRoute, type ApiResponseEnvelope, type RequestPrincipal } from '../http/middleware';
 import type { ChronosDatabaseHandle } from '@lib/db/client';
 
 export async function handleGamificationRoutes(
@@ -26,19 +25,19 @@ export async function handleGamificationRoutes(
 	if (urlPath.startsWith(API_ROUTES.GAMIFICATION_RULES)) {
 		if (method === 'GET') return okResponse({ rules: defaultGamificationInterceptor.getAllRules() });
 		if (method === 'POST') {
-			const denied = await requireCapability(principal, method, headers, CAPABILITY_BITS.RULE_PROFILE_MUTATE);
-			if (denied) return denied;
-			const body = bodyText ? parseSafeJson<Record<string, unknown>>(bodyText) : {};
-			if (typeof body.eventKind === 'string' && typeof body.baseXp === 'number') {
-				defaultGamificationInterceptor.updateRule(body as unknown as import('@config/gamification/gamification.registry').GamificationXpRuleSpec);
-				return okResponse({ updated: true, rule: body });
-			}
-			return badRequestResponse('Valid GamificationXpRuleSpec with eventKind and baseXp required');
+			return runCapabilityRoute(principal, method, headers, CAPABILITY_BITS.RULE_PROFILE_MUTATE, false, () => {
+				const body = parseBodyObject(bodyText);
+				if (typeof body.eventKind === 'string' && typeof body.baseXp === 'number') {
+					defaultGamificationInterceptor.updateRule(body as unknown as import('@config/gamification/gamification.registry').GamificationXpRuleSpec);
+					return okResponse({ updated: true, rule: body });
+				}
+				return badRequestResponse('Valid GamificationXpRuleSpec with eventKind and baseXp required');
+			});
 		}
 	}
 
 	if (urlPath.startsWith(API_ROUTES.GAMIFICATION_AWARD) && method === 'POST') {
-		const body = bodyText ? parseSafeJson<{ eventKind?: string }>(bodyText) : {};
+		const body = parseBodyObject<{ eventKind?: string }>(bodyText);
 		if (!body?.eventKind) return badRequestResponse('eventKind is required');
 		const res = defaultGamificationInterceptor.intercept({ kind: body.eventKind, actorId: principal.username });
 		return okResponse({ success: Boolean(res), result: res });

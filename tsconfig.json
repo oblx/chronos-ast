@@ -12,6 +12,8 @@
 		"strict": true,
 		"paths": {
 			"@/*": ["./src/*"],
+			"@ui": ["./src/ui/index.ts"],
+			"@ui/*": ["./src/ui/*"],
 			"@config/*": ["./src/config/*"],
 			"@client/*": ["./src/client/*"],
 			"@core/*": ["./src/core/*"],

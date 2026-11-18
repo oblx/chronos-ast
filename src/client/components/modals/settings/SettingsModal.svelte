@@ -4,7 +4,7 @@
 -->
 <script lang="ts">
 	import type { GraphEngineMode } from '@config/constants';
-	import { HUD_THEME_PRESETS, SURFACE_PATTERNS } from '@config/hud.tokens';
+	import { HUD_INTENT_KINDS, HUD_THEME_PRESETS, SURFACE_PATTERNS } from '@config/hud.tokens';
 	import { hudWire } from '@client/state/hud.wire.svelte';
 	import { securityWire } from '@client/state/security.wire.svelte';
 	import HudModalShell from '../HudModalShell.svelte';
@@ -32,37 +32,38 @@
 	let activeTab = $state('VISUALS');
 
 	const settingsTabs: readonly HudSubTabItem[] = [
-		{ id: 'VISUALS', label: 'Visuals & Substrate', badge: '6 THEMES' },
-		{ id: 'ENGINES', label: 'Engines & Storage', badge: 'DAG / AST' },
-		{ id: 'SECURITY', label: 'RBAC, Vault & Audit', badge: 'u32 / AEAD' },
-		{ id: 'GAMIFICATION', label: 'Gamification & XP Matrix', badge: 'CUBIC' },
+		{ id: 'VISUALS', label: 'Visuals & Substrate', badge: '6' },
+		{ id: 'ENGINES', label: 'Engines & Storage', badge: 'AST' },
+		{ id: 'SECURITY', label: 'RBAC & Vault', badge: 'u32' },
+		{ id: 'GAMIFICATION', label: 'XP Matrix', badge: 'n³' },
 	];
 
 	function handleSelectTab(tabId: string): void {
 		activeTab = tabId === 'APPEARANCE' ? 'VISUALS' : tabId;
-		if (activeTab === 'SECURITY') securityWire.refreshSecurityTelemetry();
+		hudWire.emitUiIntent(HUD_INTENT_KINDS.UI_TAB_SWITCH, 'APP_MODAL', { modal: 'SETTINGS', tab: activeTab });
+		if (activeTab === 'SECURITY') void securityWire.refreshSecurityStatus();
 	}
 </script>
 
-<HudModalShell {isOpen} ariaLabel="Chronos HUD and Engine Settings" maxWidthClass="max-w-5xl" {onClose}>
+<HudModalShell {isOpen} transitionKey={activeTab} ariaLabel="Settings" maxWidthClass="max-w-6xl" {onClose}>
 	{#snippet header()}
 		<HudModalHeader
-			title="HUD, Substrate & Security Calibration"
-			subtitle="PROGRESSIVE DISCLOSURE · 5-LAYER SUBSTRATE · U32 RBAC MATRIX · WRITE-ONLY AEAD VAULT"
+			title="Settings"
+			subtitle="APPEARANCE · ACCESSIBILITY · ENGINES · SECURITY & PRIVACY"
 			{onClose}
 		/>
-		<div class="px-5 py-2 border-b border-[var(--hud-border)] bg-[var(--hud-bg)] flex items-center justify-between gap-3">
+		<div class="px-5 py-2 border-b border-[var(--hud-border)] bg-[var(--hud-bg)] flex items-center justify-between gap-2 overflow-x-auto">
 			<HudSubTabBar
 				tabs={settingsTabs}
 				activeTabId={activeTab}
 				ariaLabel="Settings Sub-Tabs"
 				onSelect={handleSelectTab}
 			/>
-			<span class="font-mono text-[11px] text-[var(--hud-muted)] shrink-0">{securityWire.roleId} · {securityWire.maskHex()}</span>
+			<span class="font-mono text-[0.6875rem] text-[var(--hud-muted)] whitespace-nowrap shrink-0">{securityWire.roleId} · {securityWire.maskHex()}</span>
 		</div>
 	{/snippet}
 
-	<div data-hud-vscroll="true" class="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-3">
+	<div data-testid="settings-bento-body" class="flex-1 min-h-0 overflow-y-hidden flex flex-col gap-2">
 		{#if activeTab === 'GAMIFICATION'}
 			<AdminXpConfigPanel />
 		{:else if activeTab === 'SECURITY'}

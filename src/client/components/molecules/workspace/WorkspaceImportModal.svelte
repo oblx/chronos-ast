@@ -15,9 +15,10 @@
 		onUploadSourceFiles: (workspaceName: string, files: readonly SourceFileUnit[]) => Promise<void>; onIngestSampleZip: () => Promise<void>;
 		onIngestRemoteUrl: (url: string, workspaceName?: string) => Promise<void>;
 		onIngestGitRepo?: (repoUrl: string, branchOrRef?: string, vaultSecretId?: string) => Promise<void>;
+		onIngestLocalSelf?: (workspaceName?: string) => Promise<void>;
 		onSaveAiConfig: (url: string, bearer: string) => void;
 	}
-	let { isOpen, exportedJson, providerUrl, providerBearer, onClose, onImportBundleJson, onUploadZipBytes, onUploadSourceFiles, onIngestSampleZip, onIngestRemoteUrl, onIngestGitRepo, onSaveAiConfig }: Props = $props();
+	let { isOpen, exportedJson, providerUrl, providerBearer, onClose, onImportBundleJson, onUploadZipBytes, onUploadSourceFiles, onIngestSampleZip, onIngestRemoteUrl, onIngestGitRepo, onIngestLocalSelf, onSaveAiConfig }: Props = $props();
 	let activeSourceTab = $state<'ZIP_FOLDER' | 'GIT_REPO' | 'REMOTE_URL' | 'JSON_BUNDLE'>('ZIP_FOLDER');
 	let workspaceTitle = $state(''), remoteUrlInput = $state<string>(WORKSPACE_DEFAULTS.SAMPLE_REMOTE_URL), importText = $state('');
 	let gitRepoInput = $state('github:sveltejs/svelte@main'), gitBranchInput = $state('main'), gitVaultSecretId = $state('');
@@ -91,7 +92,12 @@
 			<div class="border border-dashed border-[var(--hud-accent)] bg-[var(--hud-bg)] p-5 flex flex-col items-center justify-center gap-3 text-center">
 				<p class="text-xs text-[var(--hud-text)] font-semibold">Select a Project <span class="text-[var(--hud-accent)]">.ZIP</span> Archive or Source Files (<span class="text-[var(--hud-nominal)]">.ts, .svelte, .rs, .cpp, .py, .go</span>)</p>
 				<input aria-label="Upload project zip or source files" type="file" multiple accept=".zip,.ts,.tsx,.js,.jsx,.svelte,.rs,.cpp,.cc,.c,.hpp,.h,.go,.py,.json" onchange={(e) => handleFileSelection((e.currentTarget as HTMLInputElement).files)} class="text-xs text-[var(--hud-muted)] file:mr-3 file:px-3 file:py-1.5 file:border file:border-[var(--hud-accent)] file:bg-[var(--hud-surface)] file:text-[var(--hud-accent)] file:cursor-pointer" />
-				<button type="button" disabled={isBusy} onclick={async () => { isBusy = true; await onIngestSampleZip(); isBusy = false; onClose(); }} class="px-3 py-1.5 bg-[var(--hud-accent)] text-[var(--hud-bg-base)] font-semibold cursor-pointer hud-tactile-bevel">Load Sample .ZIP Archive (Arcade Vector SDK)</button>
+				<div class="flex flex-wrap items-center justify-center gap-2">
+					<button type="button" disabled={isBusy} onclick={async () => { isBusy = true; await onIngestSampleZip(); isBusy = false; onClose(); }} class="px-3 py-1.5 bg-[var(--hud-accent)] text-[var(--hud-bg-base)] font-semibold cursor-pointer hud-tactile-bevel">Load Sample .ZIP Archive (Arcade Vector SDK)</button>
+					{#if onIngestLocalSelf}
+						<button type="button" data-testid="ingest-local-self-btn" disabled={isBusy} onclick={async () => { isBusy = true; try { await onIngestLocalSelf(workspaceTitle.trim() || undefined); onClose(); } catch (err) { errorMsg = err instanceof Error ? err.message : 'Local ingest failed'; } finally { isBusy = false; } }} class="px-3 py-1.5 border border-[var(--hud-nominal)] bg-[var(--hud-surface)] text-[var(--hud-nominal)] font-semibold cursor-pointer">Self-Analyze Chronos Repo (Unified)</button>
+					{/if}
+				</div>
 			</div>
 		{:else if activeSourceTab === 'GIT_REPO'}
 			<div class="flex flex-col gap-2.5 bg-[var(--hud-bg)] border border-[var(--hud-border)] p-3.5">

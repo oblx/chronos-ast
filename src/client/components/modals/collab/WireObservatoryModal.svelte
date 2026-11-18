@@ -80,7 +80,7 @@
 			</div>
 			<div class="flex items-center gap-1.5">
 				<HudChamferButton chamferCorner={CHAMFER_PROFILES.LEFT_END_CAP} cutPx={5} variant={paused ? 'brass' : 'nominal'} testid="wire-pause-toggle-btn" onclick={handleTogglePause} className="px-2.5 py-1 text-[11px] font-bold">
-					{paused ? '▶ Resume Buffer' : '⏸ Freeze Buffer'}
+					{paused ? '▸ Resume Buffer' : '‖ Freeze Buffer'}
 				</HudChamferButton>
 				<HudChamferButton chamferCorner={CHAMFER_PROFILES.RIGHT_END_CAP} cutPx={5} variant="accent" testid="wire-sync-server-btn" onclick={handleRefreshServerSpine} className="px-2.5 py-1 text-[11px]">
 					↻ Pull Server Spine

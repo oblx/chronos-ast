@@ -47,6 +47,11 @@ const SAFE_ALTERS: readonly string[] = [
 	'ALTER TABLE projects ADD COLUMN violation_count INTEGER NOT NULL DEFAULT 0;',
 	'ALTER TABLE projects ADD COLUMN snapshot_revision INTEGER NOT NULL DEFAULT 1;',
 	"ALTER TABLE projects ADD COLUMN active_hlc_timestamp TEXT NOT NULL DEFAULT '';",
+	"ALTER TABLE user_preferences ADD COLUMN corner_style TEXT NOT NULL DEFAULT 'CHAMFER';",
+	'ALTER TABLE user_preferences ADD COLUMN font_scale_pct INTEGER NOT NULL DEFAULT 100;',
+	'ALTER TABLE user_preferences ADD COLUMN high_contrast_mode INTEGER NOT NULL DEFAULT 0;',
+	'ALTER TABLE user_preferences ADD COLUMN kinetic_motion_enabled INTEGER NOT NULL DEFAULT 1;',
+	'ALTER TABLE user_preferences ADD COLUMN dyslexia_friendly_font INTEGER NOT NULL DEFAULT 0;',
 ];
 
 export function createChronosDb(dbPath: string = SQLITE_CONFIG.MEMORY_DB_URI): ChronosDatabaseHandle {

@@ -55,7 +55,7 @@ test('u32 RBAC bitmask formula, Demo Guest 0x000001C1 restriction, Chronos group
 	}
 });
 
-test('Argon2id pepper rotation v1->v2, GitHub/Google OAuth2 account linking to u32 uid, and brute-force rate limiter', async () => {
+test('Argon2id pepper rotation v1->v2 and GitHub/Google OAuth2 account linking to u32 uid', async () => {
 	resetAuthRateLimiter();
 	const handle = createChronosDb();
 	try {
@@ -79,14 +79,23 @@ test('Argon2id pepper rotation v1->v2, GitHub/Google OAuth2 account linking to u
 		assert.equal(okV2?.userId, okV1?.userId);
 		const credAfter = handle.db.select().from(credentials).where(eq(credentials.userId, okV1!.userId)).get();
 		assert.equal(credAfter?.pepperVersion, 2);
-
-		for (let i = 0; i < 5; i++) {
-			const bad = await localPasswordAuthAdapter.verifyCredential(handle, { username: 'alice', password: 'wrong-password', clientIp: '198.51.100.4' });
-			assert.equal(bad, null);
-		}
-		await assert.rejects(() => localPasswordAuthAdapter.verifyCredential(handle, { username: 'alice', password: 'wrong-password', clientIp: '198.51.100.4' }), /Rate limited/);
 	} finally {
 		delete Bun.env.CHRONOS_AUTH_PEPPER_V2;
+		closeChronosDb(handle);
+	}
+});
+
+test('Auth brute-force rate limiter blocks after repeated failed password attempts', async () => {
+	resetAuthRateLimiter();
+	const handle = createChronosDb();
+	try {
+		await registerLocalUser(handle, { username: 'ratelimit-op', password: 'correct-horse-battery', email: 'rl@oblx.dev' });
+		for (let i = 0; i < 5; i++) {
+			const bad = await localPasswordAuthAdapter.verifyCredential(handle, { username: 'ratelimit-op', password: 'wrong-password', clientIp: '198.51.100.4' });
+			assert.equal(bad, null);
+		}
+		await assert.rejects(() => localPasswordAuthAdapter.verifyCredential(handle, { username: 'ratelimit-op', password: 'wrong-password', clientIp: '198.51.100.4' }), /Rate limited/);
+	} finally {
 		closeChronosDb(handle);
 	}
 });

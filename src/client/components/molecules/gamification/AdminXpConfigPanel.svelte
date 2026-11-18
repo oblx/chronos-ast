@@ -37,7 +37,7 @@
 <div class="p-3.5 border border-[var(--hud-border)] bg-[var(--hud-panel)] flex flex-col gap-3 font-mono text-[13px]">
 	<div class="flex items-center justify-between gap-3 border-b border-[var(--hud-border)] pb-2.5">
 		<div class="flex items-center gap-2">
-			<ShieldAlert size={15} class="text-[var(--hud-brass,#f59e0b)]" />
+			<ShieldAlert size={15} class="text-[var(--hud-accent-secondary)]" />
 			<span class="text-xs font-bold uppercase tracking-wider text-[var(--hud-accent-secondary)]">Dynamic DAG Event XP Configurator (RBAC Admin)</span>
 		</div>
 		<div class="flex items-center gap-2">
@@ -45,7 +45,7 @@
 				<Search size={12} class="absolute left-2 text-[var(--hud-muted)]" />
 				<input type="text" bind:value={searchQuery} placeholder="Filter event kind..." class="bg-[var(--hud-bg)] border border-[var(--hud-border)] pl-6 pr-2 py-0.5 text-xs text-[var(--hud-text)] w-44" />
 			</div>
-			<HudChamferButton variant="primary" size="xs" onclick={saveAllRules}>
+			<HudChamferButton variant="accent" onclick={saveAllRules} className="px-2.5 py-1 text-xs">
 				{#if savedSuccess}<Check size={12} /> Saved!{:else}<Save size={12} /> Save Matrix{/if}
 			</HudChamferButton>
 		</div>
@@ -70,7 +70,7 @@
 							<div class="font-bold text-[var(--hud-text-primary)] text-[11px]">{rule.eventKind}</div>
 							<span class="text-[10px] text-[var(--hud-muted)]">{rule.label}</span>
 						</td>
-						<td class="p-2 text-[10px] text-[var(--hud-brass,#f59e0b)]">{rule.category}</td>
+						<td class="p-2 text-[10px] text-[var(--hud-accent-secondary)]">{rule.category}</td>
 						<td class="p-2">
 							<input type="number" min="0" max="1000" value={rule.baseXp} onchange={(e) => updateRuleField(i, 'baseXp', Number((e.target as HTMLInputElement).value))} class="w-16 bg-[var(--hud-bg)] border border-[var(--hud-border)] px-1.5 py-0.5 text-xs text-right text-[var(--hud-text-primary)]" />
 						</td>

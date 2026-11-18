@@ -1,0 +1,77 @@
+/* Kinetic HUD FX, Glitter Signal Burst, Utility Off-When-Idle Styling, Vault Grayscale & Cyber Scrollbars */
+@keyframes hudSignalFlow { to { stroke-dashoffset: -24; } }
+@keyframes hudReticleBreathe { 0%, 100% { opacity: 0.55; transform: scale(1); } 50% { opacity: 1; transform: scale(1.03); } }
+@keyframes hudLedPulse { 0%, 100% { opacity: 0.55; transform: scale(0.92); } 50% { opacity: 1; transform: scale(1.1); } }
+@keyframes hudRadarRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes hudFormShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+@keyframes hudGlitterSparkle {
+	0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(0deg); }
+	22% { opacity: 1; transform: translate(-50%, -50%) scale(1.35) rotate(45deg); }
+	65% { opacity: 0.85; transform: translate(-50%, -50%) scale(0.9) rotate(90deg); }
+	100% { opacity: 0; transform: translate(-50%, -50%) scale(0.2) rotate(135deg); }
+}
+
+.hud-signal-flow { animation: hudSignalFlow 2.2s linear infinite; }
+.hud-reticle-breathe { transform-box: fill-box; transform-origin: center; animation: hudReticleBreathe 3.2s ease-in-out infinite; }
+.hud-led-pulse { animation: hudLedPulse 2s ease-in-out infinite; }
+.hud-form-shake { animation: hudFormShake 280ms ease-in-out; }
+.hud-radar-sweep { animation: hudRadarRotate 6s linear infinite; transform-origin: 50px 50px; }
+
+.hud-utility-icon-btn {
+	color: color-mix(in srgb, var(--hud-muted) 88%, transparent);
+	opacity: 0.72;
+	transition: opacity 150ms ease-out, color 150ms ease-out, transform 120ms ease-out;
+}
+.hud-utility-icon-hull {
+	fill: color-mix(in srgb, var(--hud-surface) 42%, transparent);
+	stroke: color-mix(in srgb, var(--hud-border) 78%, transparent);
+	transition: fill 150ms ease-out, stroke 150ms ease-out;
+}
+.hud-utility-icon-btn:hover,
+.hud-utility-icon-btn:focus-visible,
+.hud-utility-icon-btn.hud-utility-icon-active,
+.hud-utility-icon-btn[data-glitter-active="true"] {
+	opacity: 1;
+	color: var(--hud-util-accent, var(--hud-accent-primary));
+}
+.hud-utility-icon-btn:hover .hud-utility-icon-hull,
+.hud-utility-icon-btn:focus-visible .hud-utility-icon-hull,
+.hud-utility-icon-btn.hud-utility-icon-active .hud-utility-icon-hull,
+.hud-utility-icon-btn[data-glitter-active="true"] .hud-utility-icon-hull {
+	fill: color-mix(in srgb, var(--hud-util-accent, var(--hud-accent-primary)) 18%, var(--hud-surface));
+	stroke: var(--hud-util-accent, var(--hud-accent-primary));
+}
+.hud-utility-icon-btn:active { transform: translateY(1px) scale(0.96); }
+
+.hud-glitter-spark {
+	position: absolute;
+	background: radial-gradient(circle, var(--hud-accent-secondary) 0%, var(--hud-accent-primary) 55%, transparent 75%);
+	clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
+	animation: hudGlitterSparkle 2.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+	pointer-events: none;
+}
+
+[data-hud-motion="REDUCED"] .hud-zone-transition,
+[data-hud-motion="REDUCED"] .hud-animated-resize-stage,
+[data-hud-motion="REDUCED"] .hud-hover-lift,
+[data-hud-motion="REDUCED"] .hud-glint-trigger::after,
+[data-hud-motion="REDUCED"] .hud-signal-flow,
+[data-hud-motion="REDUCED"] .hud-led-pulse,
+[data-hud-motion="REDUCED"] .hud-reticle-breathe,
+[data-hud-motion="REDUCED"] .hud-radar-sweep,
+[data-hud-motion="REDUCED"] .hud-glitter-spark { transition: none !important; animation: none !important; opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+	.hud-zone-transition, .hud-animated-resize-stage, .hud-hover-lift, .hud-glint-trigger::after,
+	.hud-signal-flow, .hud-led-pulse, .hud-reticle-breathe, .hud-radar-sweep, .hud-glitter-spark {
+		transition: none !important; animation: none !important;
+	}
+}
+
+.hud-cyber-scroll, .hud-tome-thin-scroll { scrollbar-width: thin; scrollbar-color: var(--hud-accent-primary) var(--hud-surface-recessed); }
+.hud-cyber-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+.hud-cyber-scroll::-webkit-scrollbar-track, .hud-tome-thin-scroll::-webkit-scrollbar-track { background: var(--hud-surface-recessed); border-top: 1px solid var(--hud-border); }
+.hud-cyber-scroll::-webkit-scrollbar-thumb, .hud-tome-thin-scroll::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--hud-accent-primary) 72%, var(--hud-border)); box-shadow: 0 0 8px color-mix(in srgb, var(--hud-accent-primary) 45%, transparent); }
+.hud-cyber-scroll::-webkit-scrollbar-thumb:hover { background: var(--hud-accent-primary); }
+.hud-tome-thin-scroll::-webkit-scrollbar { height: 4px; width: 4px; }
+.ui-vault-card-idle { filter: grayscale(0.92) saturate(0.15) brightness(0.84); opacity: 0.82; transition: filter 180ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease, transform 180ms ease; }
+.ui-vault-card-idle:hover, .ui-vault-card-idle:focus-visible, .ui-vault-card-active { filter: grayscale(0) saturate(1.18) brightness(1.06); opacity: 1; transform: translateY(-0.125rem); transition: filter 180ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease, transform 180ms ease; }

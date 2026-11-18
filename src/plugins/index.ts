@@ -2,4 +2,4 @@
  * @author Oblx <code@oblx.dev>
  * @description Barrel exports for src/plugins.
  */
-export {};
+export * from './ingestors';

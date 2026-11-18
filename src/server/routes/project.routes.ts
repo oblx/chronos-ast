@@ -8,16 +8,16 @@ import { CAPABILITY_BITS } from '@config/security.constants';
 import { createChronosAiRegistry } from '@lib/ai/provider/client/ai.bridge';
 import type { ChronosDatabaseHandle } from '@lib/db/sqlite/client/connection';
 import { deriveShortCodeFromName } from '@lib/db/indexeddb/repository/workspace.idb';
-import { projectMembers, projects, users } from '@lib/db/sqlite/schema/tables';
-import { parseSafeJson } from '@lib/utils/log.sanitizer';
+import { projectMembers, projects } from '@lib/db/sqlite/schema/tables';
 import type { WorkspaceSnapshot } from '@core/metamodel/workspace.indexer';
 import { evaluateWorkspaceCodeCheck } from '@core/metrics/codecheck.engine';
 import { appendAuditEntry } from '@core/security/audit.chain';
 import { compileEffectiveUserMask } from '@core/security/chronos.rbac';
 import { redactOutboundPayload } from '@core/security/guards/payload.redactor';
 import { hasCapability } from '@core/security/rbac.bitmask';
+import { executePluggableIngestion, type PluggableIngestRequest } from '@plugins/ingestors';
 import { handleGitIngestRoute, handleGitPrPublishRoute } from '../http/git.route';
-import { badRequestResponse, okResponse, requireCapability, type ApiResponseEnvelope, type RequestPrincipal } from '../http/middleware';
+import { badRequestResponse, okResponse, parseBodyObject, resolveCallerUid, runCapabilityRoute, type ApiResponseEnvelope, type RequestPrincipal } from '../http/middleware';
 
 const DEFAULT_TEAM_PROJECTS = [
 	{ id: 1, slug: 'chronos-core', shortCode: 'CHR-CORE', name: 'Chronos Core Workspace', description: 'Primary Chronos Metamodel & HUD Engine', ownerId: 1, visibility: PROJECT_VISIBILITY.INTERNAL, files: 11, entities: 135 },
@@ -75,15 +75,15 @@ async function handleProjectPost(
 	method: string, headers: Record<string, string>, principal: RequestPrincipal, uid: number
 ): Promise<ApiResponseEnvelope> {
 	if (String(body.action ?? 'CREATE') === 'ASSIGN_MEMBER') {
-		const denied = await requireCapability(principal, method, headers, CAPABILITY_BITS.USER_ROLE_ASSIGN, true);
-		if (denied) return denied;
-		const projectId = Number(body.projectId ?? 1) >>> 0, targetUid = Number(body.userId ?? 2) >>> 0, groupId = Number(body.groupId ?? 2) >>> 0;
-		const overrideMask = Number(body.personalOverrideMask ?? 0) >>> 0;
-		handle.db.delete(projectMembers).where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, targetUid))).run();
-		handle.db.insert(projectMembers).values({ projectId, userId: targetUid, groupId, personalOverrideMask: overrideMask, joinedAt: Date.now() }).run();
-		const effectiveMask = compileEffectiveUserMask(handle, targetUid, { workspaceContextId: projectId });
-		await appendAuditEntry(handle, principal.userId, 'PROJECT_MEMBER_ASSIGNED', 'INFO', `Assigned uid=${targetUid} to project=${projectId} group=${groupId}`);
-		return okResponse({ assigned: true, projectId, userId: targetUid, groupId, effectiveMask });
+		return runCapabilityRoute(principal, method, headers, CAPABILITY_BITS.USER_ROLE_ASSIGN, true, async () => {
+			const projectId = Number(body.projectId ?? 1) >>> 0, targetUid = Number(body.userId ?? 2) >>> 0, groupId = Number(body.groupId ?? 2) >>> 0;
+			const overrideMask = Number(body.personalOverrideMask ?? 0) >>> 0;
+			handle.db.delete(projectMembers).where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, targetUid))).run();
+			handle.db.insert(projectMembers).values({ projectId, userId: targetUid, groupId, personalOverrideMask: overrideMask, joinedAt: Date.now() }).run();
+			const effectiveMask = compileEffectiveUserMask(handle, targetUid, { workspaceContextId: projectId });
+			await appendAuditEntry(handle, principal.userId, 'PROJECT_MEMBER_ASSIGNED', 'INFO', `Assigned uid=${targetUid} to project=${projectId} group=${groupId}`);
+			return okResponse({ assigned: true, projectId, userId: targetUid, groupId, effectiveMask });
+		});
 	}
 	const name = String(body.name ?? '').trim();
 	if (!name) return badRequestResponse('Project name is required.');
@@ -108,18 +108,24 @@ export async function handleProjectAndAiRoutes(
 ): Promise<ApiResponseEnvelope | null> {
 	ensureDefaultProjectsSeeded(handle, snapshot);
 	if (urlPath.startsWith(API_ROUTES.INGEST_GIT) && method === 'POST') return handleGitIngestRoute(handle, bodyText, method, headers, principal);
+	if (urlPath.startsWith(API_ROUTES.INGEST_UNIFIED) && method === 'POST') {
+		return runCapabilityRoute(principal, method, headers, CAPABILITY_BITS.WORKSPACE_INGEST_ARCHIVE, false, async () => {
+			const outcome = await executePluggableIngestion(handle, snapshot, parseBodyObject(bodyText) as unknown as PluggableIngestRequest);
+			return okResponse(outcome);
+		});
+	}
 	if (urlPath.startsWith(API_ROUTES.GIT_PR) && method === 'POST') return handleGitPrPublishRoute(handle, snapshot, bodyText, method, headers, principal);
 	if (urlPath.startsWith(API_ROUTES.PROJECTS)) {
-		const uid = handle.db.select().from(users).where(eq(users.id, principal.userId)).get()?.uid ?? 0;
+		const uid = resolveCallerUid(handle, principal);
 		if (method === 'GET') {
 			const allProjs = handle.db.select().from(projects).all(), memberships = handle.db.select().from(projectMembers).all();
 			const visible = allProjs.filter((p) => p.visibility !== 'PRIVATE' || p.ownerId === uid || memberships.some((m) => m.projectId === p.id && m.userId === uid));
 			return okResponse({ projects: visible, memberships });
 		}
-		if (method === 'POST') return handleProjectPost(handle, snapshot, bodyText ? parseSafeJson<Record<string, unknown>>(bodyText) : {}, method, headers, principal, uid);
+		if (method === 'POST') return handleProjectPost(handle, snapshot, parseBodyObject(bodyText), method, headers, principal, uid);
 	}
 	if (urlPath.startsWith(API_ROUTES.AI_CHAT) && method === 'POST') {
-		const body = bodyText ? parseSafeJson<Record<string, unknown>>(bodyText) : {};
+		const body = parseBodyObject(bodyText);
 		const redaction = redactOutboundPayload(String(body.prompt ?? '/explain').trim());
 		const prompt = redaction.redactedText;
 		const focalId = body.focalEntityId !== undefined && body.focalEntityId !== null ? Number(body.focalEntityId) : null;

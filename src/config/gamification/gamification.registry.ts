@@ -36,12 +36,12 @@ export interface AchievementCardSpec {
 }
 
 export const ACHIEVEMENT_CARDS: readonly AchievementCardSpec[] = [
-	{ id: 'card-genesis-pathfinder', category: CARD_CATEGORIES.CODEMAP_PIONEER, glyph: '⚡', title: 'Genesis Pathfinder', description: 'Detect Tier-0 project entry points and trace execution hops.', metricKey: 'codemap_entry_traces', tierThresholds: [1, 5, 20, 60, 150] },
-	{ id: 'card-macro-cartographer', category: CARD_CATEGORIES.CODEMAP_PIONEER, glyph: '🗺', title: 'Macro Cartographer', description: 'Navigate Macro, Meso, and Micro semantic zoom LOD rings.', metricKey: 'codemap_lod_transitions', tierThresholds: [3, 15, 50, 150, 400] },
+	{ id: 'card-genesis-pathfinder', category: CARD_CATEGORIES.CODEMAP_PIONEER, glyph: '↯', title: 'Genesis Pathfinder', description: 'Detect Tier-0 project entry points and trace execution hops.', metricKey: 'codemap_entry_traces', tierThresholds: [1, 5, 20, 60, 150] },
+	{ id: 'card-macro-cartographer', category: CARD_CATEGORIES.CODEMAP_PIONEER, glyph: '⊞', title: 'Macro Cartographer', description: 'Navigate Macro, Meso, and Micro semantic zoom LOD rings.', metricKey: 'codemap_lod_transitions', tierThresholds: [3, 15, 50, 150, 400] },
 	{ id: 'card-cross-view-navigator', category: CARD_CATEGORIES.CODEMAP_PIONEER, glyph: '⇄', title: 'Cross-View Navigator', description: 'Sync focal entity & camera across Codemap, Butterfly, CFG & Source.', metricKey: 'cross_view_handoffs', tierThresholds: [2, 10, 35, 100, 300] },
 
 	{ id: 'card-polyglot', category: CARD_CATEGORIES.AST_CARTOGRAPHER, glyph: '⊞', title: 'Polyglot Indexer', description: 'Index and map source files across 12 supported languages.', metricKey: 'indexed_files_count', tierThresholds: [5, 25, 100, 500, 1500] },
-	{ id: 'card-preprocessor-alchemist', category: CARD_CATEGORIES.AST_CARTOGRAPHER, glyph: '⚙', title: 'Preprocessor Alchemist', description: 'Expand C/C++ #define macros and conditional compilation branches.', metricKey: 'macros_expanded', tierThresholds: [2, 10, 35, 100, 250] },
+	{ id: 'card-preprocessor-alchemist', category: CARD_CATEGORIES.AST_CARTOGRAPHER, glyph: '⎈', title: 'Preprocessor Alchemist', description: 'Expand C/C++ #define macros and conditional compilation branches.', metricKey: 'macros_expanded', tierThresholds: [2, 10, 35, 100, 250] },
 	{ id: 'card-alias-resolver', category: CARD_CATEGORIES.AST_CARTOGRAPHER, glyph: '☍', title: 'Alias Resolver', description: 'Converge flow-insensitive pointer & reference alias sets.', metricKey: 'alias_sets_converged', tierThresholds: [2, 10, 40, 120, 300] },
 
 	{ id: 'card-butterfly-hops', category: CARD_CATEGORIES.GRAPH_NAVIGATOR, glyph: '⌖', title: 'Butterfly Cartographer', description: 'Traverse multi-hop Ca/Ce call graph paths.', metricKey: 'butterfly_traversals', tierThresholds: [3, 15, 50, 150, 500] },
@@ -50,27 +50,27 @@ export const ACHIEVEMENT_CARDS: readonly AchievementCardSpec[] = [
 
 	{ id: 'card-cycle-breaker', category: CARD_CATEGORIES.ARCHITECT_SENTINEL, glyph: '▦', title: 'Cycle Breaker', description: 'Inspect and isolate Tarjan SCC feedback cycles in DSM.', metricKey: 'cycles_analyzed', tierThresholds: [1, 5, 25, 60, 150] },
 	{ id: 'card-codecheck-audit', category: CARD_CATEGORIES.ARCHITECT_SENTINEL, glyph: '✎', title: 'Compliance Warden', description: 'Audit CHR-001..017 rules and record deviation sign-offs.', metricKey: 'deviations_signed', tierThresholds: [1, 5, 15, 40, 100] },
-	{ id: 'card-hotspot-hunter', category: CARD_CATEGORIES.ARCHITECT_SENTINEL, glyph: '🔥', title: 'Hotspot Hunter', description: 'Isolate high-complexity cushion tiles in Squarified Treemap.', metricKey: 'treemap_hotspots_inspected', tierThresholds: [2, 10, 35, 100, 250] },
+	{ id: 'card-hotspot-hunter', category: CARD_CATEGORIES.ARCHITECT_SENTINEL, glyph: '✦', title: 'Hotspot Hunter', description: 'Isolate high-complexity cushion tiles in Squarified Treemap.', metricKey: 'treemap_hotspots_inspected', tierThresholds: [2, 10, 35, 100, 250] },
 
 	{ id: 'card-uml-architect', category: CARD_CATEGORIES.MODELING_ARTISAN, glyph: '◈', title: 'UML Architect', description: 'Project Class Hierarchy, Sequence Lifelines & Shared Objects.', metricKey: 'uml_diagrams_rendered', tierThresholds: [2, 8, 25, 80, 200] },
 	{ id: 'card-mermaid-weaver', category: CARD_CATEGORIES.MODELING_ARTISAN, glyph: '❖', title: 'Mermaid Weaver', description: 'Author live Mermaid DSL blueprints and export PlantUML.', metricKey: 'mermaid_renders', tierThresholds: [2, 8, 30, 90, 240] },
-	{ id: 'card-tome-scholar', category: CARD_CATEGORIES.MODELING_ARTISAN, glyph: '📖', title: 'Formula Scholar', description: 'Master Field Tome chapters and execute HUD spotlight drills.', metricKey: 'tome_steps_mastered', tierThresholds: [1, 5, 15, 35, 75] },
+	{ id: 'card-tome-scholar', category: CARD_CATEGORIES.MODELING_ARTISAN, glyph: '§', title: 'Formula Scholar', description: 'Master Field Tome chapters and execute HUD spotlight drills.', metricKey: 'tome_steps_mastered', tierThresholds: [1, 5, 15, 35, 75] },
 
 	{ id: 'card-git-ingest', category: CARD_CATEGORIES.GIT_FORGE_OPERATOR, glyph: '⇣', title: 'Packfile Ingestor', description: 'Ingest Git Smart HTTP v2 packfiles and ZIP archives.', metricKey: 'git_ingest_count', tierThresholds: [1, 3, 10, 25, 50] },
 	{ id: 'card-pr-publisher', category: CARD_CATEGORIES.GIT_FORGE_OPERATOR, glyph: '⇪', title: 'Pull Request Publisher', description: 'Publish automated architectural remediation PR bundles.', metricKey: 'git_prs_published', tierThresholds: [1, 3, 10, 25, 60] },
 	{ id: 'card-vector-export', category: CARD_CATEGORIES.GIT_FORGE_OPERATOR, glyph: '↥', title: 'SARIF Bridge Marshal', description: 'Export SARIF 2.1.0, SonarQube, Cytoscape & Memgraph Cypher.', metricKey: 'exports_generated', tierThresholds: [1, 5, 20, 50, 120] },
 
-	{ id: 'card-vault-sentinel', category: CARD_CATEGORIES.CRYPTO_GUARDIAN, glyph: '🛡', title: 'Vault Sentinel', description: 'Seal secrets inside AEAD AES-256-GCM write-only vault.', metricKey: 'vault_secrets_stored', tierThresholds: [1, 3, 8, 20, 50] },
-	{ id: 'card-hlc-sync', category: CARD_CATEGORIES.CRYPTO_GUARDIAN, glyph: '⏱', title: 'HLC Sync Chronicler', description: 'Reconcile causal offline HLC delta mutations & audit chains.', metricKey: 'hlc_deltas_synced', tierThresholds: [2, 10, 40, 120, 300] },
-	{ id: 'card-multi-auth-sovereign', category: CARD_CATEGORIES.CRYPTO_GUARDIAN, glyph: '🔑', title: 'Multi-Auth Sovereign', description: 'Authenticate via Passkey, OIDC PKCE, PAT & 16-bit RBAC masks.', metricKey: 'auth_elevations', tierThresholds: [1, 3, 10, 25, 60] },
+	{ id: 'card-vault-sentinel', category: CARD_CATEGORIES.CRYPTO_GUARDIAN, glyph: '◈', title: 'Vault Sentinel', description: 'Seal secrets inside AEAD AES-256-GCM write-only vault.', metricKey: 'vault_secrets_stored', tierThresholds: [1, 3, 8, 20, 50] },
+	{ id: 'card-hlc-sync', category: CARD_CATEGORIES.CRYPTO_GUARDIAN, glyph: '⌬', title: 'HLC Sync Chronicler', description: 'Reconcile causal offline HLC delta mutations & audit chains.', metricKey: 'hlc_deltas_synced', tierThresholds: [2, 10, 40, 120, 300] },
+	{ id: 'card-multi-auth-sovereign', category: CARD_CATEGORIES.CRYPTO_GUARDIAN, glyph: '⬡', title: 'Multi-Auth Sovereign', description: 'Authenticate via Passkey, OIDC PKCE, PAT & 16-bit RBAC masks.', metricKey: 'auth_elevations', tierThresholds: [1, 3, 10, 25, 60] },
 
-	{ id: 'card-cluster-collab', category: CARD_CATEGORIES.SQUAD_COMMANDER, glyph: '👥', title: 'Cluster Synapse', description: 'Collaborate live in multi-user WebSocket squad clusters.', metricKey: 'collab_sessions', tierThresholds: [1, 5, 20, 50, 150] },
-	{ id: 'card-cursor-telepath', category: CARD_CATEGORIES.SQUAD_COMMANDER, glyph: '↖', title: 'Cursor Telepath', description: 'Stream 60fps virtual cursors across Canvas, Modal & HUD scopes.', metricKey: 'cursor_frames_streamed', tierThresholds: [5, 25, 100, 300, 1000] },
-	{ id: 'card-social-diplomat', category: CARD_CATEGORIES.SQUAD_COMMANDER, glyph: '🤝', title: 'Social Diplomat', description: 'Build operator friend graph and dispatch room invitations.', metricKey: 'social_invites_sent', tierThresholds: [1, 4, 12, 30, 80] },
+	{ id: 'card-cluster-collab', category: CARD_CATEGORIES.SQUAD_COMMANDER, glyph: '◎', title: 'Cluster Synapse', description: 'Collaborate live in multi-user WebSocket squad clusters.', metricKey: 'collab_sessions', tierThresholds: [1, 5, 20, 50, 150] },
+	{ id: 'card-cursor-telepath', category: CARD_CATEGORIES.SQUAD_COMMANDER, glyph: '⌖', title: 'Cursor Telepath', description: 'Stream 60fps virtual cursors across Canvas, Modal & HUD scopes.', metricKey: 'cursor_frames_streamed', tierThresholds: [5, 25, 100, 300, 1000] },
+	{ id: 'card-social-diplomat', category: CARD_CATEGORIES.SQUAD_COMMANDER, glyph: '⟡', title: 'Social Diplomat', description: 'Build operator friend graph and dispatch room invitations.', metricKey: 'social_invites_sent', tierThresholds: [1, 4, 12, 30, 80] },
 
-	{ id: 'card-theme-alchemist', category: CARD_CATEGORIES.STUDIO_CUSTOMIZER, glyph: '🎨', title: 'Theme Alchemist', description: 'Switch themes and publish WCAG-verified community palettes.', metricKey: 'themes_applied', tierThresholds: [2, 6, 18, 50, 100] },
+	{ id: 'card-theme-alchemist', category: CARD_CATEGORIES.STUDIO_CUSTOMIZER, glyph: '◐', title: 'Theme Alchemist', description: 'Switch themes and publish WCAG-verified community palettes.', metricKey: 'themes_applied', tierThresholds: [2, 6, 18, 50, 100] },
 	{ id: 'card-bento-radar-ace', category: CARD_CATEGORIES.STUDIO_CUSTOMIZER, glyph: '◎', title: 'Bento Radar Ace', description: 'Calibrate Bento Tactical Radar sweep, zoom & detachable docks.', metricKey: 'radar_calibrations', tierThresholds: [2, 10, 35, 100, 250] },
-	{ id: 'card-privacy-sbc-master', category: CARD_CATEGORIES.STUDIO_CUSTOMIZER, glyph: '⚖', title: 'Privacy & SBC Master', description: 'Exercise GDPR Art. 15/17 sovereignty & edge budget profiles.', metricKey: 'privacy_audits_run', tierThresholds: [1, 3, 10, 25, 60] },
+	{ id: 'card-privacy-sbc-master', category: CARD_CATEGORIES.STUDIO_CUSTOMIZER, glyph: '⎈', title: 'Privacy & SBC Master', description: 'Exercise GDPR Art. 15/17 sovereignty & edge budget profiles.', metricKey: 'privacy_audits_run', tierThresholds: [1, 3, 10, 25, 60] },
 ] as const;
 
 export interface GamificationXpRuleSpec {

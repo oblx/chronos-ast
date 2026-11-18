@@ -8,11 +8,10 @@ import { HUD_EVENTS } from '@config/hud.events';
 import { CAPABILITY_BITS, CHRONOS_RBAC_GROUPS, SEEDED_OPERATOR_CONFIG } from '@config/security.constants';
 import type { ChronosDatabaseHandle } from '@lib/db/sqlite/client/connection';
 import { collabInvites, rbacGroups, rbacUserGroups, userFriendships, users } from '@lib/db/sqlite/schema/tables';
-import { parseSafeJson } from '@lib/utils/log.sanitizer';
 import { appendAuditEntry } from '@core/security/audit.chain';
 import { hasCapability } from '@core/security/rbac.bitmask';
 import { emitDirectToUser, forceSummonUserSessions, getWsRoomSnapshot } from '@server/ws/ws.hub';
-import { badRequestResponse, okResponse, type ApiResponseEnvelope, type RequestPrincipal } from '../http/middleware';
+import { badRequestResponse, okResponse, parseBodyObject, type ApiResponseEnvelope, type RequestPrincipal } from '../http/middleware';
 
 function estimateOperatorLevel(weight: number, timeLoggedSec = 0): number {
 	const fromWeight = weight >= 100 ? 18 : weight >= 75 ? 12 : weight >= 50 ? 9 : weight >= 10 ? 5 : 1;
@@ -113,7 +112,7 @@ async function handlePrivilegedOverridePost(handle: ChronosDatabaseHandle, body:
 
 export async function handleCollabRoutes(handle: ChronosDatabaseHandle, urlPath: string, method: string, bodyText: string | undefined, principal: RequestPrincipal): Promise<ApiResponseEnvelope | null> {
 	if (urlPath.startsWith(API_ROUTES.COLLAB_FRIENDS) && method === 'GET') return handleCollabDirectoryGet(handle, principal);
-	const body = bodyText ? parseSafeJson<Record<string, unknown>>(bodyText) : {};
+	const body = parseBodyObject(bodyText);
 	if (urlPath.startsWith(API_ROUTES.COLLAB_FRIENDS) && method === 'POST') return handleFriendsPost(handle, body, principal);
 	if (urlPath.startsWith(API_ROUTES.COLLAB_INVITES) && method === 'POST') return handleInvitesPost(handle, body, principal);
 	if (urlPath.startsWith(API_ROUTES.COLLAB_OVERRIDE) && method === 'POST') return handlePrivilegedOverridePost(handle, body, principal);

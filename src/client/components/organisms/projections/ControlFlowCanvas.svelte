@@ -3,7 +3,7 @@
 	@description Chronos v2.4.0 Inline-Code CFG Flowchart with numbered source lines, Loop Nesting Zones, orthogonal [T]/[F] edges, and dominator trail.
 -->
 <script lang="ts">
-	import { CFG_LAYOUT_CONSTANTS, HUD_THEME } from '@config/hud.tokens';
+	import { CFG_LAYOUT_CONSTANTS, HUD_INTENT_KINDS, HUD_THEME } from '@config/hud.tokens';
 	import { CFG_BLOCK_KINDS, CFG_EDGE_KINDS } from '@config/metamodel.constants';
 	import {
 		type CodeCheckViolation,
@@ -71,6 +71,9 @@
 		const midY = Math.round((sy + ty) / 2);
 		return Math.abs(sx - tx) < 4 ? `M ${sx} ${sy} L ${tx} ${ty}` : `M ${sx} ${sy} L ${sx} ${midY} L ${tx} ${midY} L ${tx} ${ty}`;
 	}
+	function selectCfgLine(line: number, stepKind?: string): void { selectedLine = line; hudWire.emitUiIntent(HUD_INTENT_KINDS.PROJECTION_OPTION_TOGGLE, 'WORLD_CANVAS', { view: 'CFG', line, stepKind }); }
+	function toggleBlockExpand(blockId: number, e: Event): void { e.stopPropagation(); expandedBlocks = expandedBlocks.includes(blockId) ? expandedBlocks.filter((id) => id !== blockId) : [...expandedBlocks, blockId]; hudWire.emitUiIntent(HUD_INTENT_KINDS.PROJECTION_OPTION_TOGGLE, 'WORLD_CANVAS', { view: 'CFG', blockId, expanded: expandedBlocks.includes(blockId) }); }
+	function applyStepper(next: ReturnType<typeof createVirtualStepperSession> | null, kind: string): void { stepperOverride = next; selectCfgLine(next ? next.currentLine : 1, kind); if (next && next.activeEntityId !== entity.id && (kind === 'INTO' || kind === 'RETURN')) onSelectEntity(next.activeEntityId, next.currentLine); }
 </script>
 
 <div class="w-full h-full grid grid-cols-1 md:grid-cols-12 overflow-hidden bg-[var(--hud-bg)]/60 border border-[var(--hud-accent-primary)]/45">
@@ -79,7 +82,7 @@
 			<div class="flex items-center gap-2"><span class="text-[var(--hud-accent-secondary)] font-bold">⑂ CFG // INLINE BASIC BLOCKS</span><span class="text-[var(--hud-muted)]">({cfg.blocks.length} blocks · v(G)={cfg.cyclomaticFormulaV})</span></div>
 			<span class={`px-2 py-0.5 text-[11px] border ${cfg.unreachableCount > 0 ? 'border-[var(--hud-danger)] text-[var(--hud-danger)] font-bold' : 'border-[var(--hud-nominal)] text-[var(--hud-nominal)]'}`}>DEAD: {cfg.unreachableCount}</span>
 		</div>
-		<VirtualStepperBar {stepper} onStepOver={() => { const n = stepOver(stepper, effectiveSourceMap); stepperOverride = n; selectedLine = n.currentLine; }} onStepInto={() => { const n = stepInto(stepper, nodes, edges, effectiveSourceMap); stepperOverride = n; selectedLine = n.currentLine; if (n.activeEntityId !== entity.id) onSelectEntity(n.activeEntityId, n.currentLine); }} onStepReturn={() => { const n = stepReturn(stepper); stepperOverride = n; selectedLine = n.currentLine; if (n.activeEntityId !== entity.id) onSelectEntity(n.activeEntityId, n.currentLine); }} onBacktrack={() => { const n = backtrack(stepper, nodes); stepperOverride = n; selectedLine = n.currentLine; }} onChooseBranch={(idx) => { const n = chooseBranch(stepper, effectiveSourceMap, idx); stepperOverride = n; selectedLine = n.currentLine; }} onReset={() => { stepperOverride = null; selectedLine = 1; }} />
+		<VirtualStepperBar {stepper} onStepOver={() => applyStepper(stepOver(stepper, effectiveSourceMap), 'OVER')} onStepInto={() => applyStepper(stepInto(stepper, nodes, edges, effectiveSourceMap), 'INTO')} onStepReturn={() => applyStepper(stepReturn(stepper), 'RETURN')} onBacktrack={() => applyStepper(backtrack(stepper, nodes), 'BACKTRACK')} onChooseBranch={(idx) => applyStepper(chooseBranch(stepper, effectiveSourceMap, idx), 'BRANCH')} onReset={() => applyStepper(null, 'RESET')} />
 		<div class="relative flex-1 overflow-hidden">
 			<HudSurfacePattern patternId={hudWire.surfacePatterns.SUBSTRATE} opacity={hudWire.surfaceOpacity * 0.25} tileScale={hudWire.surfaceScale} />
 			<HudInteractiveCanvasStage boundsWidth={CFG_LAYOUT_CONSTANTS.VIEWBOX_WIDTH} boundsHeight={layout.totalH} nodeCount={cfg.blocks.length} fitKey={`cfg-${entity.id}-${cfg.blocks.length}`} resetNonce={hudWire.canvasResetNonce} ariaLabel="Interactive Control Flow Graph">
@@ -105,10 +108,16 @@
 						{#each layout.items as block (block.id)}
 							{@const isDead = !block.isReachable || block.kind === CFG_BLOCK_KINDS.UNREACHABLE}{@const isActive = stepper.currentBlockId === block.id}{@const onDomTrail = dominatorTrail.has(block.id)}
 							{@const stroke = isActive ? 'var(--hud-accent-secondary)' : isDead ? HUD_THEME.COLORS.DANGER : onDomTrail ? 'var(--hud-nominal)' : block.kind === CFG_BLOCK_KINDS.BRANCH_DECISION || block.kind === CFG_BLOCK_KINDS.LOOP_HEADER ? 'var(--hud-warning)' : 'var(--hud-accent-primary)'}
-							<g data-graph-node="true" class="cursor-pointer" role="button" tabindex="0" onclick={() => (selectedLine = block.lineStart)} onkeydown={(e) => e.key === 'Enter' && (selectedLine = block.lineStart)}>
+							<g data-graph-node="true" class="cursor-pointer" role="button" tabindex="0" onclick={() => selectCfgLine(block.lineStart, 'BLOCK')} onkeydown={(e) => e.key === 'Enter' && selectCfgLine(block.lineStart, 'BLOCK')}>
 								<rect x={block.cx - block.w / 2} y={block.topY} width={block.w} height={block.h} fill="var(--hud-panel)" {stroke} stroke-width={isActive || onDomTrail ? '2.2' : '1.2'} />
 								<rect x={block.cx - block.w / 2} y={block.topY} width={block.w} height="20" fill="var(--hud-surface)" />
-								<text x={block.cx - block.w / 2 + 8} y={block.topY + 14} fill={stroke} font-size="10" font-family="IBM Plex Mono" font-weight="700">{isActive ? '▶ ' : ''}B{block.id} · {block.kind} · L{block.lineStart}</text>
+								<text x={block.cx - block.w / 2 + 8} y={block.topY + 14} fill={stroke} font-size="10" font-family="IBM Plex Mono" font-weight="700">{isActive ? '▸ ' : ''}B{block.id} · {block.kind} · L{block.lineStart}</text>
+								{#if block.hasMore}
+									<g data-testid={`cfg-block-expand-${block.id}`} role="button" tabindex="0" class="cursor-pointer" onclick={(ev) => toggleBlockExpand(block.id, ev)} onkeydown={(ev) => (ev.key === 'Enter' || ev.key === ' ') && toggleBlockExpand(block.id, ev)}>
+										<rect x={block.cx + block.w / 2 - 26} y={block.topY + 3} width="22" height="14" fill="var(--hud-bg)" stroke={stroke} stroke-width="1" />
+										<text x={block.cx + block.w / 2 - 15} y={block.topY + 13} text-anchor="middle" fill={stroke} font-size="9.5" font-family="IBM Plex Mono" font-weight="700">{expandedBlocks.includes(block.id) ? '[-]' : '[+]'}</text>
+									</g>
+								{/if}
 								{#each block.shownLines as codeLine, lIdx (lIdx)}<text x={block.cx - block.w / 2 + 8} y={block.topY + 34 + lIdx * 14} fill="var(--hud-text)" font-size="10" font-family="IBM Plex Mono">{String(block.lineStart + lIdx).padStart(2, '0')} | {codeLine.trim().slice(0, 36)}</text>{/each}
 							</g>
 						{/each}

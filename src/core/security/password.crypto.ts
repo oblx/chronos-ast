@@ -41,12 +41,13 @@ export async function hashPasswordWithSaltAndPepper(
 ): Promise<{ readonly saltHex: string; readonly passwordHash: string; readonly pepperVersion: number }> {
 	const salt = csprngBytes(CRYPTO_CONSTANTS.SALT_BYTES);
 	const pepper = getPepperBytes(pepperVersion, envRecord);
+	const env = resolveRuntimeEnv(envRecord);
 	try {
 		const preHash = await hmacPepperDigest(password, salt, pepper);
 		const passwordHash = await Bun.password.hash(preHash, {
 			algorithm: 'argon2id',
-			memoryCost: CRYPTO_CONSTANTS.ARGON2_MEMORY_COST,
-			timeCost: CRYPTO_CONSTANTS.ARGON2_TIME_COST,
+			memoryCost: env.strictSecurity ? CRYPTO_CONSTANTS.ARGON2_MEMORY_COST : 16384,
+			timeCost: env.strictSecurity ? CRYPTO_CONSTANTS.ARGON2_TIME_COST : 2,
 		});
 		return { saltHex: bytesToHex(salt), passwordHash, pepperVersion };
 	} finally {

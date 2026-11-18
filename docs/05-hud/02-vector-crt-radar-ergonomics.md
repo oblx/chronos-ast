@@ -4,7 +4,7 @@
 
 ---
 
-## 1. Canonical 9-Slot Crown, Symmetric Clamping & Telemetry Readout (`v1.9.3`)
+## 1. Canonical 9-Slot Crown, Symmetric Clamping & Telemetry Readout (`v1.9.7`)
 
 * **Octagonal Polygon Substrate Clip (`HudChamferFrame.svelte`):** Clips inner substrate fills strictly inside the 45-degree octagonal border polygon so zero 90-degree background corners bleed past diagonal strokes.
 * **Symmetric `TOP_RIGHT` & `320px` Drawer Clearance (`HudLeftEdgeZone.svelte`, `HudRightEdgeZone.svelte`):** Clamps both unfolded edge drawers vertically at `top-1/2` (`max-h-[calc(100vh-320px)]`) with `12px` rail spacing so drawers never overlap `TOP_*` zones or `BOTTOM_LEFT` `LIVE STREAM`.
@@ -12,7 +12,7 @@
 
 ---
 
-## 2. Legible Auto-Fit Zoom Floor, Safe Corridor & 30s HUD Tour (`v1.9.3`)
+## 2. Legible Auto-Fit Zoom Floor, Safe Corridor & 30s HUD Tour (`v1.9.7`)
 
 * **Drawer-Aware Safe Corridor & Small-Subgraph Zoom Floor (`viewport.camera.svelte.ts`, `CAMERA_PHYSICS_TOKENS`):** Subtracts active open docked edge drawer widths inside `fitGraphToSafeCorridor()` and enforces `MIN_AUTO_FIT_ZOOM = 0.72` whenever an active subgraph contains `<= 16` nodes, keeping manual wheel/button zoom-out unlocked down to `0.15x`.
 * **30-Second Progressive HUD Unfolding (`HudGuestTutorialQuest.svelte`, `HUD_REVEAL_ZONE`):** Starts with `WORLD_CANVAS` only (`Step 1/5`) and progressively unfolds perimeter zones via `HUD_REVEAL_ZONE` + particle bursts with `Skip Tour [Esc]`.

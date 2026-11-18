@@ -7,7 +7,6 @@ import { WORKFLOW_WEBHOOK_EVENTS } from '@config/constants';
 import { CAPABILITY_BITS } from '@config/security.constants';
 import type { ChronosDatabaseHandle } from '@lib/db/sqlite/client/connection';
 import { secretsVault } from '@lib/db/sqlite/schema/tables';
-import { parseSafeJson } from '@lib/utils/log.sanitizer';
 import { publishGitPullRequest } from '@core/ingestion/git.publisher';
 import type { WorkspaceSnapshot } from '@core/metamodel/workspace.indexer';
 import { ingestGitRepository } from '@core/metamodel/workspace/ingestion/git.ingestor';
@@ -16,7 +15,7 @@ import { appendAuditEntry } from '@core/security/audit.chain';
 import { redactSourceFilesMap } from '@core/security/guards/payload.redactor';
 import { decryptVaultSecret } from '@core/security/vault.crypto';
 import { dispatchWorkflowWebhookAsync } from '@plugins/exporters/webhook.bridge';
-import { badRequestResponse, okResponse, requireCapability, type ApiResponseEnvelope, type RequestPrincipal } from './middleware';
+import { badRequestResponse, okResponse, parseBodyObject, requireCapability, type ApiResponseEnvelope, type RequestPrincipal } from './middleware';
 
 async function resolveVaultBearerToken(
 	handle: ChronosDatabaseHandle, principal: RequestPrincipal, method: string,
@@ -36,7 +35,7 @@ export async function handleGitIngestRoute(
 ): Promise<ApiResponseEnvelope> {
 	const denied = await requireCapability(principal, method, headers, CAPABILITY_BITS.WORKSPACE_INGEST_REMOTE);
 	if (denied) return denied;
-	const body = bodyText ? parseSafeJson<Record<string, unknown>>(bodyText) : {};
+	const body = parseBodyObject(bodyText);
 	const repoUrl = String(body.repoUrl ?? body.url ?? '').trim();
 	if (!repoUrl) return badRequestResponse('Git repository URL or shorthand is required.');
 	const branchOrRef = body.branchOrRef ? String(body.branchOrRef).trim() : undefined;
@@ -60,7 +59,7 @@ export async function handleGitPrPublishRoute(
 	if (denied) return denied;
 	const vaultCapDenied = await requireCapability(principal, method, headers, CAPABILITY_BITS.VAULT_SECRET_USE);
 	if (vaultCapDenied) return vaultCapDenied;
-	const body = bodyText ? parseSafeJson<Record<string, unknown>>(bodyText) : {};
+	const body = parseBodyObject(bodyText);
 	const repoUrl = String(body.repoUrl ?? body.url ?? '').trim();
 	if (!repoUrl) return badRequestResponse('Git repository URL or shorthand is required for PR publication.');
 	const vaultSecretId = body.vaultSecretId ? String(body.vaultSecretId).trim() : undefined;

@@ -4,6 +4,7 @@
  */
 export * from './router';
 export * from './middleware';
+export * from './domain.dispatch';
 export * from './workspace.routes';
 export * from './git.route';
 export * from './vault_sync.routes';

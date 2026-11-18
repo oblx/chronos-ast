@@ -7,3 +7,4 @@ export { default as HudAccordionSection } from './HudAccordionSection.svelte';
 export { default as HudSubTabBar } from './HudSubTabBar.svelte';
 export { default as HologramCard } from './HologramCard.svelte';
 export { default as HudHorizontalDeck } from './HudHorizontalDeck.svelte';
+export { default as HudAnimatedResizeBody } from './HudAnimatedResizeBody.svelte';

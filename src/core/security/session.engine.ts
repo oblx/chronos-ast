@@ -102,7 +102,7 @@ export async function issueSessionPair(
 }
 
 export async function rotateRefreshSession(
-	handle: ChronosDatabaseHandle, rawRefreshToken: string, envRecord?: Record<string, string | undefined>
+	handle: ChronosDatabaseHandle, rawRefreshToken: string, envRecord?: Record<string, string | undefined>, allowGraceWindow = false
 ): Promise<{ readonly replayed: boolean; readonly familyId?: string; readonly issued?: IssuedSessionBundle; readonly user?: { readonly id: string; readonly uid: number; readonly username: string; readonly email: string | null; readonly displayName: string; readonly principalKind: string; readonly roleId: string; readonly primaryGroupId: number } } | null> {
 	const digest = await sha256Hex(rawRefreshToken.trim());
 	const row = handle.db.select().from(sessions).where(eq(sessions.refreshDigest, digest)).get();
@@ -111,8 +111,8 @@ export async function rotateRefreshSession(
 	const maxGen = famRows.reduce((max, r) => Math.max(max, r.generation), 0);
 	if (row.revoked === 1 || row.generation < maxGen) {
 		const maxGenRow = famRows.find((r) => r.generation === maxGen);
-		const graceWindowActive = row.generation === maxGen - 1 && maxGenRow && (Date.now() - maxGenRow.createdAt <= 3000);
-		if (graceWindowActive) {
+		const graceWindowActive = allowGraceWindow && row.generation === maxGen - 1 && maxGenRow && (Date.now() - maxGenRow.createdAt <= 3000);
+		if (graceWindowActive && maxGenRow) {
 			handle.db.update(sessions).set({ revoked: 1 }).where(eq(sessions.sid, maxGenRow.sid)).run();
 			const user = handle.db.select().from(users).where(eq(users.id, row.userId)).get();
 			if (!user) return null;

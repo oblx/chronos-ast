@@ -3,6 +3,7 @@
  * @description Event-driven realtime workspace lifecycle service with IndexedDB/SQLite parity and default No-Workspace-Open state.
  */
 import { API_ROUTES, WORKSPACE_DEFAULTS, WORKSPACE_EVENT_KINDS, WORKSPACE_OPERATIONS, type WorkspaceEventKind } from '@config/constants';
+import { CAPABILITY_BITS } from '@config/security.constants';
 import { ENTITY_KINDS } from '@lib/db/schema';
 import type { WorkspaceSnapshot } from '@core/metamodel/workspace.indexer';
 import { buildInMemorySnapshotFromSources, EMBEDDED_MULTI_LANG_SAMPLES, type SourceFileUnit } from '@core/metamodel/workspace.sources';
@@ -19,14 +20,12 @@ interface ServerWorkspaceResponse {
 export interface WorkspaceDomainEvent { readonly kind: WorkspaceEventKind; readonly workspaceId: string | null; readonly workspaceName: string; readonly message: string; readonly timestamp: number; }
 const workspaceEventBus = new EventTarget();
 const crossTabChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('chronos:workspace:events') : null;
-
 export function emitWorkspaceDomainEvent(kind: WorkspaceEventKind, workspaceId: string | null, workspaceName: string, message: string): WorkspaceDomainEvent {
 	const detail: WorkspaceDomainEvent = { kind, workspaceId, workspaceName, message, timestamp: Date.now() };
 	workspaceEventBus.dispatchEvent(new CustomEvent<WorkspaceDomainEvent>('workspace-event', { detail }));
 	try { crossTabChannel?.postMessage(detail); } catch {}
 	return detail;
 }
-
 export function subscribeWorkspaceDomainEvents(listener: (event: WorkspaceDomainEvent) => void): () => void {
 	const onLocal = (e: Event): void => listener((e as CustomEvent<WorkspaceDomainEvent>).detail);
 	const onRemote = (e: MessageEvent<WorkspaceDomainEvent>): void => { if (e.data?.kind) listener(e.data); };
@@ -34,14 +33,12 @@ export function subscribeWorkspaceDomainEvents(listener: (event: WorkspaceDomain
 	crossTabChannel?.addEventListener('message', onRemote);
 	return () => { workspaceEventBus.removeEventListener('workspace-event', onLocal); crossTabChannel?.removeEventListener('message', onRemote); };
 }
-
 async function postWorkspaceCommand<TResponse = ServerWorkspaceResponse>(payload: Record<string, unknown>, route: string = API_ROUTES.WORKSPACES): Promise<TResponse> {
 	const res = await fetch(route, { method: 'POST', headers: securityWire.buildHeaders(), body: JSON.stringify(payload) });
 	const data = await res.json();
 	if (!res.ok) throw new Error(data?.error ?? `Workspace command failed (${res.status})`);
 	return data as TResponse;
 }
-
 async function registerServerWorkspaceAsTab(created: ServerWorkspaceResponse, eventKind: WorkspaceEventKind = WORKSPACE_EVENT_KINDS.OPENED): Promise<WorkspaceTabDescriptor> {
 	const tab: WorkspaceTabDescriptor = {
 		id: created.id, projectId: created.projectId ?? 1, projectIdentityKey: created.projectIdentityKey,
@@ -57,7 +54,6 @@ export function pickDefaultFocalEntityId(data: WorkspaceSnapshot): number {
 	const fnNode = data.nodes.find((n) => n.kind === ENTITY_KINDS.FUNCTION && (n.afferentCoupling > 0 || n.efferentCoupling > 0));
 	return fnNode?.id ?? data.nodes[0]?.id ?? WORKSPACE_DEFAULTS.FALLBACK_ENTITY_ID;
 }
-
 export async function fetchInitialWorkspaceTabs(): Promise<{ readonly tabs: WorkspaceTabDescriptor[]; readonly statusBanner: string }> {
 	const persistedTabs = await loadAllTabsFromIndexedDb();
 	if (persistedTabs.length > 0) {
@@ -67,28 +63,30 @@ export async function fetchInitialWorkspaceTabs(): Promise<{ readonly tabs: Work
 	const defaultTab = await openCoreSnapshotWorkspaceTab();
 	return { tabs: [defaultTab], statusBanner: 'Restored 1 Workspace(s) (IDB)' };
 }
-
 export async function openCoreSnapshotWorkspaceTab(): Promise<WorkspaceTabDescriptor> {
 	const core = computeProjectIdentity({ kind: 'CORE', name: WORKSPACE_DEFAULTS.CORE_NAME });
 	try {
 		const res = await fetch(API_ROUTES.SNAPSHOT);
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
-		const primarySnap: WorkspaceSnapshot = await res.json();
-		return await registerServerWorkspaceAsTab({ id: core.workspaceId, projectIdentityKey: core.projectIdentityKey, slug: core.slug, shortCode: WORKSPACE_DEFAULTS.CORE_SHORT_CODE, name: WORKSPACE_DEFAULTS.CORE_NAME, updatedAt: Date.now(), snapshot: primarySnap });
+		return await registerServerWorkspaceAsTab({ id: core.workspaceId, projectIdentityKey: core.projectIdentityKey, slug: core.slug, shortCode: WORKSPACE_DEFAULTS.CORE_SHORT_CODE, name: WORKSPACE_DEFAULTS.CORE_NAME, updatedAt: Date.now(), snapshot: await res.json() });
 	} catch {
 		return registerServerWorkspaceAsTab({ id: core.workspaceId, projectIdentityKey: core.projectIdentityKey, slug: core.slug, shortCode: WORKSPACE_DEFAULTS.CORE_SHORT_CODE, name: WORKSPACE_DEFAULTS.CORE_NAME, updatedAt: Date.now(), snapshot: buildInMemorySnapshotFromSources(EMBEDDED_MULTI_LANG_SAMPLES) });
 	}
 }
-
 export async function openPresetWorkspaceTab(currentCount: number): Promise<WorkspaceTabDescriptor> {
 	if (currentCount === 0) return openCoreSnapshotWorkspaceTab();
 	const preset = currentCount % 2 === 1 ? WORKSPACE_DEFAULTS.PRESET_KEYS.CHRONOS_KERNEL : WORKSPACE_DEFAULTS.PRESET_KEYS.HEXAGONAL_GRAPH;
 	const identity = computeProjectIdentity({ kind: 'PRESET', name: `Static Preset (${preset})`, sourceOrigin: preset });
+	try { return await registerServerWorkspaceAsTab(await postWorkspaceCommand({ operation: WORKSPACE_OPERATIONS.OPEN, preset })); }
+	catch { return registerServerWorkspaceAsTab({ id: identity.workspaceId, projectIdentityKey: identity.projectIdentityKey, slug: identity.slug, name: `Static Preset (${preset})`, updatedAt: Date.now(), snapshot: buildInMemorySnapshotFromSources(EMBEDDED_MULTI_LANG_SAMPLES) }); }
+}
+export async function openNamedServerProjectTab(projectKey: string): Promise<WorkspaceTabDescriptor> {
+	const shortCode = projectKey.toUpperCase().slice(0, 12);
 	try {
-		return await registerServerWorkspaceAsTab(await postWorkspaceCommand({ operation: WORKSPACE_OPERATIONS.OPEN, preset }));
-	} catch {
-		return registerServerWorkspaceAsTab({ id: identity.workspaceId, projectIdentityKey: identity.projectIdentityKey, slug: identity.slug, name: `Static Preset (${preset})`, updatedAt: Date.now(), snapshot: buildInMemorySnapshotFromSources(EMBEDDED_MULTI_LANG_SAMPLES) });
-	}
+		const res = await fetch(`${API_ROUTES.SNAPSHOT}?project=${encodeURIComponent(projectKey)}`);
+		if (!res.ok) throw new Error(`HTTP ${res.status}`);
+		return await registerServerWorkspaceAsTab({ id: projectKey, slug: projectKey, shortCode, name: projectKey, updatedAt: Date.now(), snapshot: await res.json() });
+	} catch { return registerServerWorkspaceAsTab({ id: projectKey, slug: projectKey, shortCode, name: projectKey, updatedAt: Date.now(), snapshot: buildInMemorySnapshotFromSources(EMBEDDED_MULTI_LANG_SAMPLES) }); }
 }
 export async function reindexActiveWorkspaceTab(activeTab: WorkspaceTabDescriptor): Promise<WorkspaceTabDescriptor> {
 	const sources: SourceFileUnit[] = Object.entries(activeTab.snapshot.sourceMap).filter(([p]) => !p.includes('::')).map(([path, code]) => ({ path, code }));
@@ -121,27 +119,31 @@ export async function generateSampleZipWorkspaceTab(): Promise<WorkspaceTabDescr
 	]);
 	return ingestZipArchiveBytesIntoTab(sampleZipBytes, 'Arcade Vector SDK (.zip)');
 }
-export async function ingestRemoteUrlIntoTab(url: string, workspaceName?: string): Promise<WorkspaceTabDescriptor> {
-	return registerServerWorkspaceAsTab(await postWorkspaceCommand({ operation: WORKSPACE_OPERATIONS.IMPORT_URL, url, workspaceName }), WORKSPACE_EVENT_KINDS.INDEXED);
-}
+export async function ingestRemoteUrlIntoTab(url: string, workspaceName?: string): Promise<WorkspaceTabDescriptor> { return registerServerWorkspaceAsTab(await postWorkspaceCommand({ operation: WORKSPACE_OPERATIONS.IMPORT_URL, url, workspaceName }), WORKSPACE_EVENT_KINDS.INDEXED); }
 export async function ingestGitRepoIntoTab(repoUrl: string, branchOrRef?: string, vaultSecretId?: string): Promise<WorkspaceTabDescriptor> {
-	return registerServerWorkspaceAsTab(await postWorkspaceCommand({ repoUrl, branchOrRef, vaultSecretId }, API_ROUTES.INGEST_GIT), WORKSPACE_EVENT_KINDS.INDEXED);
+	try { return await registerServerWorkspaceAsTab(await postWorkspaceCommand({ repoUrl, branchOrRef, vaultSecretId }, API_ROUTES.INGEST_GIT), WORKSPACE_EVENT_KINDS.INDEXED); }
+	catch { return registerServerWorkspaceAsTab(await postWorkspaceCommand({ adapter: 'PUBLIC_GITHUB_AND_GIT_PACK', repoUrl, branchOrRef }, API_ROUTES.INGEST_UNIFIED), WORKSPACE_EVENT_KINDS.INDEXED); }
 }
-
+export async function ingestLocalSelfWorkspaceTab(workspaceName?: string): Promise<WorkspaceTabDescriptor> {
+	const name = workspaceName?.trim() || 'Chronos Self-Analysis Workspace';
+	if (securityWire.can(CAPABILITY_BITS.WORKSPACE_INGEST_ARCHIVE)) {
+		try { return await registerServerWorkspaceAsTab(await postWorkspaceCommand({ adapter: 'LOCAL_WORKSPACE', workspaceName: name }, API_ROUTES.INGEST_UNIFIED), WORKSPACE_EVENT_KINDS.INDEXED); }
+		catch {}
+	}
+	const id = computeProjectIdentity({ kind: 'LOCAL', name, sourceOrigin: 'chronos-self' });
+	const snap = await fetch(API_ROUTES.SNAPSHOT).then((r) => (r.ok ? r.json() : null)).catch(() => null) ?? buildInMemorySnapshotFromSources(EMBEDDED_MULTI_LANG_SAMPLES);
+	return registerServerWorkspaceAsTab({ id: id.workspaceId, projectIdentityKey: id.projectIdentityKey, slug: id.slug, name, updatedAt: Date.now(), snapshot: snap }, WORKSPACE_EVENT_KINDS.INDEXED);
+}
 export async function closeWorkspaceTabById(tabId: string): Promise<void> {
-	await deleteTabFromIndexedDb(tabId);
-	emitWorkspaceDomainEvent(WORKSPACE_EVENT_KINDS.CLOSED, tabId, tabId, `Closed workspace ${tabId}`);
+	await deleteTabFromIndexedDb(tabId); emitWorkspaceDomainEvent(WORKSPACE_EVENT_KINDS.CLOSED, tabId, tabId, `Closed workspace ${tabId}`);
 	try { await postWorkspaceCommand({ operation: WORKSPACE_OPERATIONS.CLOSE, workspaceId: tabId }); } catch {}
 }
 export async function persistWorkspaceTab(tab: WorkspaceTabDescriptor): Promise<void> {
-	await saveTabToIndexedDb(tab);
-	emitWorkspaceDomainEvent(WORKSPACE_EVENT_KINDS.SAVED, tab.id, tab.name, `Saved ${tab.name} (SQLite + IDB)`);
+	await saveTabToIndexedDb(tab); emitWorkspaceDomainEvent(WORKSPACE_EVENT_KINDS.SAVED, tab.id, tab.name, `Saved ${tab.name} (SQLite + IDB)`);
 	try { await postWorkspaceCommand({ operation: WORKSPACE_OPERATIONS.SAVE, workspaceId: tab.id, workspaceName: tab.name, snapshot: tab.snapshot }); } catch {}
 }
 export async function importBundleIntoTab(rawJson: string): Promise<WorkspaceTabDescriptor> {
 	const bundle = deserializeWorkspaceBundle(rawJson), identity = computeProjectIdentity({ kind: 'BUNDLE', name: bundle.workspaceName, sourceOrigin: bundle.workspaceId });
 	return registerServerWorkspaceAsTab({ id: identity.workspaceId, projectIdentityKey: identity.projectIdentityKey, slug: identity.slug, name: bundle.workspaceName, updatedAt: Date.now(), snapshot: bundle.snapshot });
 }
-export function exportTabBundleJson(tab: WorkspaceTabDescriptor): string {
-	return JSON.stringify(serializeWorkspaceBundle(tab.id, tab.name, tab.snapshot), null, 2);
-}
+export function exportTabBundleJson(tab: WorkspaceTabDescriptor): string { return JSON.stringify(serializeWorkspaceBundle(tab.id, tab.name, tab.snapshot), null, 2); }

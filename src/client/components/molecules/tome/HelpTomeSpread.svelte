@@ -1,6 +1,6 @@
 <!--
 	@author Oblx <code@oblx.dev>
-	@description Chronos Architect's Field Tome Spread: 136px Internal Chronicle Spine | Left Folio (6-Card 2x3 Paginated Grid + Corner-Safe MathML Pedestal) | Right Folio (Reader + Drill Pedestal).
+	@description Chronos Architect's Field Tome Spread: 136px Internal Chronicle Spine | Left Folio (6-Card 2x3 Paginated Grid + Corner-Safe MathML Pedestal) | Right Folio (Reader + Unclipped Drill Pedestal).
 -->
 <script lang="ts">
 	import { CHAMFER_PROFILES, HULL_PROFILES } from '@config/hud.tokens';
@@ -8,6 +8,7 @@
 	import HudChamferButton from '@client/components/atoms/HudChamferButton.svelte';
 	import HudChamferFrame from '@client/components/atoms/HudChamferFrame.svelte';
 	import HudMathFormula from '@client/components/atoms/HudMathFormula.svelte';
+	import HudAnimatedResizeBody from '../HudAnimatedResizeBody.svelte';
 	import HudSubTabBar, { type HudSubTabItem } from '../HudSubTabBar.svelte';
 	import HudMathText from './HudMathText.svelte';
 
@@ -27,7 +28,7 @@
 	const CHRONICLES = [
 		{ id: '00', label: '00 Vision', sigil: '◈' }, { id: '01', label: '01 Arch', sigil: '⬡' }, { id: '02', label: '02 Model', sigil: '⊞' },
 		{ id: '03', label: '03 Math', sigil: '∑' }, { id: '04', label: '04 Ingest', sigil: '⇣' }, { id: '05', label: '05 HUD', sigil: '⌖' },
-		{ id: '06', label: '06 Ops', sigil: '⚙' }, { id: '07', label: '07 Print', sigil: '📐' },
+		{ id: '06', label: '06 Ops', sigil: '⎈' }, { id: '07', label: '07 Print', sigil: '⊿' },
 	] as const;
 	const PAGE_SIZE = 6;
 	let rightScrollTab = $state<'OVERVIEW' | 'PATHS'>('OVERVIEW');
@@ -52,7 +53,7 @@
 	</nav>
 	<div aria-hidden="true" class="hidden lg:block w-[2px] h-full bg-gradient-to-b from-[var(--hud-accent-primary)] via-[var(--hud-accent-secondary)] to-[var(--hud-accent-primary)] opacity-75"></div>
 
-	<section data-testid="tome-left-page" class="p-3.5 flex flex-col justify-between gap-3 bg-[var(--hud-bg)]/55 min-w-0">
+	<section data-testid="tome-left-page" class="p-3 flex flex-col justify-between gap-2.5 bg-[var(--hud-bg)]/55 min-w-0">
 		<div class="flex flex-col gap-2 min-w-0">
 			<div class="flex items-center justify-between gap-2 text-[11px] text-[var(--hud-muted)]">
 				<span class="uppercase tracking-wider text-[var(--hud-accent-secondary)] font-bold truncate">Chronicle Advancement Index ({visibleChapters.length})</span>
@@ -67,10 +68,10 @@
 			<div data-testid="tome-advancement-grid" class="grid grid-cols-2 grid-rows-3 gap-2 min-w-0">
 				{#each pagedChapters as chap (chap.id)}
 					{@const mastered = chap.subSteps.every((s) => completedStepIds[s.id])}
-					<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={6} active={activeChapter?.id === chap.id} variant={mastered ? 'brass' : activeChapter?.id === chap.id ? 'accent' : 'default'} tip={chap.title} testid={`tome-tile-${chap.docCode}`} onclick={() => onSelectChapter(chap.id)} className="w-full h-[58px] px-3 py-1.5 text-left justify-between overflow-hidden min-w-0">
+					<HudChamferButton chamferCorner={CHAMFER_PROFILES.INTERIOR_CHAMFER} cutPx={6} active={activeChapter?.id === chap.id} variant={mastered ? 'brass' : activeChapter?.id === chap.id ? 'accent' : 'default'} tip={chap.title} testid={`tome-tile-${chap.docCode}`} onclick={() => onSelectChapter(chap.id)} className="w-full h-[3.75rem] px-3 py-1.5 text-left justify-between overflow-hidden min-w-0">
 						<span class="flex flex-col justify-center min-w-0 flex-1 pr-1.5 whitespace-normal">
 							<span class="text-[9.5px] uppercase tracking-wider text-[var(--hud-accent-secondary)] font-bold leading-tight">{chap.docCode} · {chap.tier}</span>
-							<span class="text-[11px] font-bold text-[var(--hud-text)] leading-tight line-clamp-2">{cleanChapterTitle(chap)}</span>
+							<span class="max-w-full text-[11px] font-bold text-[var(--hud-text)] leading-snug line-clamp-2">{cleanChapterTitle(chap)}</span>
 						</span>
 						<span class="px-1.5 py-0.5 border border-[var(--hud-border)] bg-[var(--hud-bg)]/80 text-[10px] shrink-0">{mastered ? '★' : `${chap.subSteps.length} §`}</span>
 					</HudChamferButton>
@@ -78,34 +79,34 @@
 			</div>
 		</div>
 
-		<div data-testid="tome-formula-pedestal" class="min-h-[136px] flex flex-col justify-center min-w-0">
-			<HudChamferFrame profile={HULL_PROFILES.CHAMFER_OCTAGON} chamferPx={12} chevrons={false} className="w-full px-5 py-3.5 flex flex-col justify-between gap-2">
+		<div data-testid="tome-formula-pedestal" class="min-h-[126px] flex flex-col justify-center min-w-0">
+			<HudChamferFrame profile={HULL_PROFILES.CHAMFER_OCTAGON} chamferPx={12} chevrons={false} className="w-full px-4 py-3 flex flex-col justify-between gap-2">
 				<div class="flex items-center justify-between gap-2 text-[10px] uppercase tracking-wider text-[var(--hud-accent-secondary)]">
 					<span class="truncate">◈ Key Equation &amp; Target Pedestal</span>
 					<span class="shrink-0">{currentStep?.anchorId ?? 'PRIMARY_CANVAS'} → {currentStep?.recommendedView ?? 'BUTTERFLY'}</span>
 				</div>
 				<div class="py-1.5 px-3 bg-[var(--hud-bg)]/90 border border-[var(--hud-border)] flex items-center justify-center overflow-x-auto"><HudMathFormula tex={showcaseFormula} display={true} /></div>
-				<div class="flex items-center justify-between gap-2 text-[10px] text-[var(--hud-muted)]">
-					<span class="truncate">Source: <code>{activeChapter?.docPath}</code></span>
+				<div class="flex items-center justify-between gap-3 text-[10.5px] text-[var(--hud-muted)] min-w-0">
+					<span data-testid="tome-equation-source-path" class="flex-1 min-w-0 truncate" title={activeChapter?.docPath}>Source: <code class="text-[var(--hud-text)]">{activeChapter?.docPath}</code></span>
 					<span class="shrink-0">Keycap: [{activeChapter?.shortcutKey ?? '?'}]</span>
 				</div>
 			</HudChamferFrame>
 		</div>
 
-		<div class="flex items-center justify-between pt-1">
-			<HudChamferButton chamferCorner={CHAMFER_PROFILES.CORNER_BOTTOM_LEFT} cutPx={6} testid="tome-prev-folio" onclick={onPrevFolio} className="px-3 py-1.5 text-xs">← Prev Folio</HudChamferButton>
+		<div class="flex items-center justify-between pt-0.5 shrink-0">
+			<HudChamferButton chamferCorner={CHAMFER_PROFILES.CORNER_BOTTOM_LEFT} cutPx={6} tip="Previous Folio [←]" testid="tome-prev-folio" onclick={onPrevFolio} className="px-3 py-1.5 text-xs">← Prev Folio [←]</HudChamferButton>
 			<span class="text-[11px] text-[var(--hud-muted)]">Chronicle {activeChapter?.docCode ?? '00-01'}</span>
 		</div>
 	</section>
 	<div aria-hidden="true" class="hidden lg:block w-[2px] h-full bg-gradient-to-b from-[var(--hud-accent-primary)] via-[var(--hud-accent-secondary)] to-[var(--hud-accent-primary)] opacity-75 shadow-[0_0_12px_var(--hud-accent-primary)]"></div>
 
-	<section data-testid="tome-right-page" class="p-3.5 flex flex-col justify-between gap-3 bg-[var(--hud-panel)]/75 min-w-0">
+	<section data-testid="tome-right-page" class="p-3 flex flex-col justify-between gap-2 bg-[var(--hud-panel)]/75 min-w-0 min-h-0 overflow-hidden">
 		{#if activeChapter && currentStep}
-			<div class="flex flex-col gap-2 min-w-0">
-				<div class="flex items-center justify-between gap-2 border-b border-[var(--hud-border)] pb-2 min-w-0">
+			<div class="flex flex-col gap-2 min-w-0 flex-1 min-h-0">
+				<div class="flex items-center justify-between gap-2 border-b border-[var(--hud-border)] pb-1.5 min-w-0 shrink-0">
 					<div class="min-w-0 flex-1">
 						<span class="text-[10px] uppercase tracking-widest text-[var(--hud-accent-secondary)] font-bold block truncate">{activeChapter.docCode} · {activeChapter.tier} · {activeChapter.title}</span>
-						<h3 class="font-display text-xl font-bold text-[var(--hud-text)] leading-tight truncate">§{currentStep.stepCode} — {currentStep.title}</h3>
+						<h3 class="font-display text-lg font-bold text-[var(--hud-text)] leading-tight truncate">§{currentStep.stepCode} — {currentStep.title}</h3>
 					</div>
 					<div class="flex items-center gap-1.5 shrink-0" role="tablist" aria-label="Chapter Sub-Step Pips">
 						{#each activeChapter.subSteps as st, idx (st.id)}
@@ -113,31 +114,35 @@
 						{/each}
 					</div>
 				</div>
-				<div class="p-2.5 border border-[var(--hud-accent-primary)]/45 bg-[var(--hud-bg)]/90 text-[12.5px] leading-relaxed text-[var(--hud-text)]"><HudMathText text={currentStep.keyTakeaway} /></div>
-				<div class="border border-[var(--hud-border)] bg-[var(--hud-surface)]/85 p-3 flex flex-col gap-2">
-					<div class="border-b border-[var(--hud-border)] pb-2 flex justify-start"><HudSubTabBar items={rightTabs} activeId={rightScrollTab} ariaLabel="Chapter Specification Tabs" onSelect={(id) => (rightScrollTab = id as 'OVERVIEW' | 'PATHS')} /></div>
-					{#if rightScrollTab === 'OVERVIEW'}
-						<ul class="flex flex-col gap-1.5 text-xs leading-relaxed">
-							{#each currentStep.bullets.slice(0, 4) as pt (pt.term + pt.detail)}<li class="text-[var(--hud-muted)]"><strong class="text-[var(--hud-accent-secondary)]">{pt.term}:</strong> <HudMathText text={pt.detail} /></li>{/each}
-						</ul>
-					{:else}
-						<div class="flex flex-wrap gap-1.5 py-1">
-							<code class="px-2 py-0.5 border border-[var(--hud-border)] bg-[var(--hud-bg)] text-[11px] text-[var(--hud-accent-primary)]">{activeChapter.docPath}</code>
-							{#each currentStep.tableRows as row (row.join('|'))}<span class="px-2 py-0.5 border border-[var(--hud-border)] bg-[var(--hud-bg)] text-[11px] text-[var(--hud-muted)]">{row.join(' · ')}</span>{/each}
+				<div data-testid="tome-summary-card" class="min-h-0 h-auto py-3 px-4 border border-[var(--hud-accent-primary)]/45 bg-[var(--hud-bg)]/90 text-sm leading-[1.55] text-[var(--hud-text)] shrink-0"><HudMathText text={currentStep.keyTakeaway} /></div>
+				<div class="border border-[var(--hud-border)] bg-[var(--hud-surface)]/85 p-2.5 flex flex-col gap-1.5 flex-1 min-h-0 overflow-hidden">
+					<div class="border-b border-[var(--hud-border)] pb-1.5 flex justify-start shrink-0"><HudSubTabBar items={rightTabs} activeId={rightScrollTab} ariaLabel="Chapter Specification Tabs" onSelect={(id) => (rightScrollTab = id as 'OVERVIEW' | 'PATHS')} /></div>
+					<HudAnimatedResizeBody transitionKey={`${activeChapter.id}-${selectedStepIdx}-${rightScrollTab}`} axis="y" className="flex-1 min-h-0">
+						<div data-testid="tome-spec-scroll-region" data-hud-vscroll="true" class="max-h-[96px] overflow-y-auto pr-2 hud-tome-thin-scroll">
+							{#if rightScrollTab === 'OVERVIEW'}
+								<ul class="flex flex-col gap-1.5 text-sm leading-[1.55]">
+									{#each currentStep.bullets.slice(0, 4) as pt (pt.term + pt.detail)}<li class="text-[var(--hud-muted)]"><strong class="text-[var(--hud-accent-secondary)]">{pt.term}:</strong> <HudMathText text={pt.detail} /></li>{/each}
+								</ul>
+							{:else}
+								<div class="flex flex-wrap gap-1.5 py-1">
+									<code class="px-2 py-0.5 border border-[var(--hud-border)] bg-[var(--hud-bg)] text-xs text-[var(--hud-accent-primary)]">{activeChapter.docPath}</code>
+									{#each currentStep.tableRows as row (row.join('|'))}<span class="px-2 py-0.5 border border-[var(--hud-border)] bg-[var(--hud-bg)] text-xs text-[var(--hud-muted)]">{row.join(' · ')}</span>{/each}
+								</div>
+							{/if}
 						</div>
-					{/if}
+					</HudAnimatedResizeBody>
 				</div>
 			</div>
-			<div data-testid="tome-drill-pedestal" class="p-3 border border-[var(--hud-accent-secondary)]/60 bg-[var(--hud-bg)]/95 flex flex-col gap-2">
-				<span class="text-[11px] text-[var(--hud-accent-secondary)] font-bold">⚡ Interactive Field Drill: <span class="font-normal text-[var(--hud-text)]">{currentStep.actionDrill}</span></span>
+			<div data-testid="tome-drill-pedestal" class="shrink-0 mt-1 p-2.5 border border-[var(--hud-accent-secondary)]/60 bg-[var(--hud-bg)]/95 flex flex-col gap-1.5">
+				<span class="text-xs text-[var(--hud-accent-secondary)] font-bold line-clamp-2 leading-snug min-w-0">↯ Interactive Field Drill: <span class="font-normal text-[var(--hud-text)]">{currentStep.actionDrill}</span></span>
 				<div class="flex flex-wrap items-center justify-between gap-2">
-					<HudChamferButton chamferCorner={CHAMFER_PROFILES.CORNER_BOTTOM_LEFT} cutPx={6} variant="accent" testid="help-spotlight-trigger" onclick={() => onSpotlight(currentStep)} className="px-3 py-1.5 text-xs font-bold">⌖ Spotlight in HUD</HudChamferButton>
-					<HudChamferButton chamferCorner={CHAMFER_PROFILES.CORNER_BOTTOM_RIGHT} cutPx={6} variant="nominal" testid="tome-complete-step-btn" onclick={onCompleteStep} className="px-3 py-1.5 text-xs font-bold">✓ Complete Sub-Step</HudChamferButton>
+					<HudChamferButton chamferCorner={CHAMFER_PROFILES.CORNER_BOTTOM_LEFT} cutPx={6} variant="accent" testid="help-spotlight-trigger" onclick={() => onSpotlight(currentStep)} className="px-3 py-1 text-xs font-bold">⌖ Spotlight in HUD</HudChamferButton>
+					<HudChamferButton chamferCorner={CHAMFER_PROFILES.CORNER_BOTTOM_RIGHT} cutPx={6} variant="nominal" testid="tome-complete-step-btn" onclick={onCompleteStep} className="px-3 py-1 text-xs font-bold">✓ Complete Sub-Step</HudChamferButton>
 				</div>
 			</div>
-			<div class="flex items-center justify-between pt-1">
+			<div class="flex items-center justify-between pt-0.5 shrink-0">
 				<span class="text-[11px] text-[var(--hud-muted)] tabular-nums">Folio {selectedStepIdx + 1} / {activeChapter.subSteps.length}</span>
-				<HudChamferButton chamferCorner={CHAMFER_PROFILES.CORNER_BOTTOM_RIGHT} cutPx={6} variant="accent" testid="tome-next-folio" onclick={onNextFolio} className="px-3 py-1.5 text-xs">Next Folio →</HudChamferButton>
+				<HudChamferButton chamferCorner={CHAMFER_PROFILES.CORNER_BOTTOM_RIGHT} cutPx={6} variant="accent" tip="Next Folio [→]" testid="tome-next-folio" onclick={onNextFolio} className="px-3 py-1.5 text-xs">Next Folio [→]</HudChamferButton>
 			</div>
 		{/if}
 	</section>

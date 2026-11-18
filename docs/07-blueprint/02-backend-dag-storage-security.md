@@ -1,6 +1,6 @@
 # 07-02 // Backend DAG Dispatch, Dual-Parity Storage, Cryptographic Vault & Realtime Wire
 
-> **Author:** `Oblx <code@oblx.dev>` | **Version:** `1.9.3` | **Parent:** [`../00-index.md`](../00-index.md)
+> **Author:** `Oblx <code@oblx.dev>` | **Version:** `1.9.7` | **Parent:** [`../00-index.md`](../00-index.md)
 
 ---
 

@@ -110,7 +110,7 @@ describe('Chronos v1.9.0 Gamification Engine, Sovereign Privacy & Outbound Paylo
 		const expRes = await handleMetamodelApiRequest(API_ROUTES.PRIVACY_EXPORT, 'GET', undefined, { authorization: `Bearer ${token}` });
 		expect(expRes.status).toBe(200);
 		const expPayload = expRes.payload as Record<string, unknown>;
-		expect(expPayload.schemaVersion).toBe('1.9.5');
+		expect(expPayload.schemaVersion).toBe('1.9.7');
 		expect(expPayload.sovereigntyGuarantee).toBe('ZERO_RAW_HASH_OR_SALT_EXPOSURE');
 
 		const unauthWire = await handleMetamodelApiRequest(API_ROUTES.SECURITY_WIRE_OBSERVE, 'GET', undefined, { authorization: `Bearer ${token}` });

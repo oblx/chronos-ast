@@ -1,22 +1,24 @@
-# 00 // Chronos Documentation Index (SSOT — v1.9.3)
+# 00 // Chronos Documentation Index (SSOT — v1.9.7)
 
 > **Author:** `Oblx <code@oblx.dev>` | **Root Truth:** [`../README.md`](../README.md) | **Cheatsheet:** [`00-vision/01-chronos-cheatsheet.md`](./00-vision/01-chronos-cheatsheet.md)
 
 ---
 
-## 1. Indexed Documentation Hierarchy (8 Chronicles · 30 Chapters)
+## 1. Indexed Documentation Hierarchy (8 Chronicles · 34 Chapters)
 
 Every document in this directory is a two-digit indexed specification (`<= 100` lines, zero embedded source code, balanced LaTeX expressions, validated directly against `src/{config, core, server, workers, lib, plugins, client}`):
 
 | Index | Category | Document Path | Architectural Domain |
 | :--- | :--- | :--- | :--- |
-| **`00-01`** | **Vision** | [`00-vision/01-chronos-cheatsheet.md`](./00-vision/01-chronos-cheatsheet.md) | 1-page executive cheatsheet: stack, metamodel, formulas, ports, and HUD (`v1.9.3`) |
+| **`00-01`** | **Vision** | [`00-vision/01-chronos-cheatsheet.md`](./00-vision/01-chronos-cheatsheet.md) | 1-page executive cheatsheet: stack, metamodel, formulas, ports, and HUD (`v1.9.7`) |
 | **`00-02`** | **Vision** | [`00-vision/02-manifesto-invariants.md`](./00-vision/02-manifesto-invariants.md) | McCarthy, McConnell, Fowler, Baer, Norman, Nishikado invariants |
 | **`01-01`** | **Architecture** | [`01-architecture/01-hexagonal-dag-topology.md`](./01-architecture/01-hexagonal-dag-topology.md) | Clean Onion rings, 5-Operator Architecture Enforcement (`CHR-017`), `projects` & Worker Pool DAG |
 | **`01-02`** | **Architecture** | [`01-architecture/02-adr-log.md`](./01-architecture/02-adr-log.md) | Architecture Decision Records (`ADR-001` through `ADR-007`, including Memgraph) |
-| **`01-03`** | **Architecture** | [`01-architecture/03-mcp-metamodel-bridge.md`](./01-architecture/03-mcp-metamodel-bridge.md) | Zero-Dependency MCP Manifest, Dual-Spine HTTP/Stdio Bridges, CLI PAT & Webhooks (`v1.9.3`) |
+| **`01-03`** | **Architecture** | [`01-architecture/03-mcp-metamodel-bridge.md`](./01-architecture/03-mcp-metamodel-bridge.md) | Zero-Dependency MCP Manifest, Dual-Spine HTTP/Stdio Bridges, CLI PAT & Webhooks (`v1.9.7`) |
 | **`01-04`** | **Architecture** | [`01-architecture/04-security-rbac-vault.md`](./01-architecture/04-security-rbac-vault.md) | 5-Stage Server Wire DAG, `chronos.admin.wire.observe`, Chronos `u32` RBAC & AEAD Vault |
-| **`02-01`** | **Metamodel** | [`02-metamodel/01-entity-reference-schema.md`](./docs/02-metamodel/01-entity-reference-schema.md) | Chronos Core Metamodel: 9 Entity Kinds, 10 Reference Kinds, `source_units` & FNV-1a |
+| **`01-05`** | **Architecture** | [`01-architecture/05-micro-frontend-ui-framework.md`](./01-architecture/05-micro-frontend-ui-framework.md) | Standalone zero-domain `@chronos-ui/svelte` framework, `UiUtilityIconButton` & `UiHorizontalDeck` |
+| **`01-06`** | **Architecture** | [`01-architecture/06-dual-spine-observable-dag.md`](./01-architecture/06-dual-spine-observable-dag.md) | Dual-spine `4`-stage/`5`-stage observable event DAG & contextual help signal routing |
+| **`02-01`** | **Metamodel** | [`02-metamodel/01-entity-reference-schema.md`](./02-metamodel/01-entity-reference-schema.md) | Chronos Core Metamodel: 9 Entity Kinds, 10 Reference Kinds, `source_units` & FNV-1a |
 | **`02-02`** | **Metamodel** | [`02-metamodel/02-sqlite-idb-parity.md`](./02-metamodel/02-sqlite-idb-parity.md) | Drizzle ORM (`bun:sqlite`), `projects`, `community_themes`, `user_preferences`, IndexedDB & Memgraph |
 | **`02-03`** | **Metamodel** | [`02-metamodel/03-cfg-scc-schema.md`](./02-metamodel/03-cfg-scc-schema.md) | Intra-Procedural CFG, Cooper-Harvey-Kennedy Dominators & Tarjan `O(V + E)` SCCs |
 | **`02-04`** | **Metamodel** | [`02-metamodel/04-codemap-compound-graph.md`](./02-metamodel/04-codemap-compound-graph.md) | Full-Project Codemap (Crown Slot 1), 3-Tier Semantic Zoom LOD & Frustum Culling |
@@ -30,7 +32,7 @@ Every document in this directory is a two-digit indexed specification (`<= 100` 
 | **`04-04`** | **Ingestion** | [`04-ingestion/04-preprocessor-alias-grammars.md`](./04-ingestion/04-preprocessor-alias-grammars.md) | C/C++ Preprocessor & Macro Expander, Andersen Alias Propagator & `KEYWORD_PAIRS` Registry |
 | **`04-05`** | **Ingestion** | [`04-ingestion/05-git-pr-publisher-sarif.md`](./04-ingestion/05-git-pr-publisher-sarif.md) | Git Smart HTTP v2 Packfile Ingestor & Automated Architectural Pull Request Publisher |
 | **`05-01`** | **HUD** | [`05-hud/01-theme-tokens-geometry.md`](./05-hud/01-theme-tokens-geometry.md) | 5-Tier Grid (`UWQHD`), Persistent Mini-Rails, `HudChamferButton`, Community Theme Studio & Ligatures |
-| **`05-02`** | **HUD** | [`05-hud/02-vector-crt-radar-ergonomics.md`](./05-hud/02-vector-crt-radar-ergonomics.md) | Camera Physics (`MIN_AUTO_FIT_ZOOM=0.72`), Edge Clamping & `HudAiCommandDeck` (`v1.9.3`) |
+| **`05-02`** | **HUD** | [`05-hud/02-vector-crt-radar-ergonomics.md`](./05-hud/02-vector-crt-radar-ergonomics.md) | Camera Physics (`MIN_AUTO_FIT_ZOOM=0.72`), Edge Clamping & `HudAiCommandDeck` (`v1.9.6`) |
 | **`05-03`** | **HUD** | [`05-hud/03-ib-source-treemap-dsm.md`](./05-hud/03-ib-source-treemap-dsm.md) | Information Browser (IB), Syntax-Colored Source Viewer, Treemap, DSM & Architect's Field Tome (`?`) |
 | **`05-04`** | **HUD** | [`05-hud/04-mermaid-themes-collab-privacy.md`](./05-hud/04-mermaid-themes-collab-privacy.md) | Mermaid Studio, Theme Marketplace, 60fps Multi-Scope Virtual Cursors & Sovereign Privacy |
 | **`06-01`** | **Operations** | [`06-operations/01-cli-testing-benchmarks.md`](./06-operations/01-cli-testing-benchmarks.md) | Verification suites (`tests/unit`, `tests/integration`, `e2e`), `bun run verify`, CLI & benchmarks |
@@ -46,11 +48,13 @@ Every document in this directory is a two-digit indexed specification (`<= 100` 
 
 | Domain Folder | Responsibility | Key Modules |
 | :--- | :--- | :--- |
-| `src/config/` | Typed constants, metamodel enums, polyglot grammars, 5-tier HUD breakpoints, 6 themes + 9-category / 27-card registry | `constants.ts`, `security.constants.ts`, `hud.tokens.ts`, `gamification/gamification.registry.ts` |
+| `src/config/` | Typed constants, metamodel enums, polyglot grammars, 5-tier HUD breakpoints, static SSG Tome (`help/`), 6 themes + 27-card registry | `constants.ts`, `security.constants.ts`, `hud.tokens.ts`, `help/tome.ssg.ts` |
 | `src/core/` | AST/syntax highlighter, Codemap (`codemap/`), Studio projections (`projections/`), Git PR publisher, security guards | `graph/codemap/*.ts`, `graph/projections/*.ts`, `security/guards/*.ts`, `metrics/*.ts` |
 | `src/server/` | 5-Stage Server Wire DAG, Forensic/Twin MCP + Manifest (`mcp/`), REST (`routes/`), WS (`ws/`) | `http/{router,server.kernel}.ts`, `mcp/{forensic,twin_client,manifest}.mcp.ts`, `ws/` |
-| `src/workers/` | Background AST Pool, `<50ms` watcher, CLI PAT Mint (`cli/`), Repo Hygiene & Invariant Auditor, QA | `auditor/{invariant,repo_hygiene}.auditor.ts`, `cli/mint_mcp_token.ts`, `qa/qa.runner.ts` |
+| `src/workers/` | Background AST Pool, `<50ms` watcher, CLI PAT Mint & SSG Compiler (`cli/`), Invariant Auditor, QA | `auditor/{invariant,repo_hygiene}.auditor.ts`, `cli/{mint_mcp_token,compile_tome_ssg}.ts`, `qa/` |
 | `src/lib/` | Drizzle SQLite (`projects`, `system_configs`, `community_themes`, `user_preferences`, `security`), IDB | `db/sqlite/`, `db/seed.operator.ts`, `db/indexeddb/`, `ogygia/`, `utils/log.sanitizer.ts` |
-| `src/plugins/` | Grammars, Auth adapters (`local`, `github`, `google`, `webauthn`, `oidc`, `pat`), Webhooks & Exporters | `auth/*.auth.ts`, `sanitizers/form.sanitizer.ts`, `exporters/{webhook.bridge,*}.ts` |
-| `src/client/` | Humble-View Svelte 5 11-Zone HUD, 4-Stage Client Wire DAG (`client.kernel.svelte.ts`), View-Model Facade (`models/`) | `state/{dag,models,hud.wire,navigation.sync,security.wire}`, `components/{atoms,zones,modals,organisms,molecules}/` |
+| `src/plugins/` | Grammars, Auth adapters (`local`, `github`, `google`, `webauthn`, `oidc`, `pat`), Forge-agnostic Git/ZIP ingestors, Exporters | `auth/*.auth.ts`, `ingestors/git.{url,ingestor}.ts`, `exporters/{webhook.bridge,*}.ts` |
+| `src/ui/` | Standalone zero-domain presentation framework (`@chronos-ui/svelte`): tokens, wire broker, machines, atoms, molecules, organisms, modals | `manifest.ts`, `tokens/`, `wire/`, `machines/`, `atoms/`, `molecules/`, `organisms/`, `modals/` |
+| `src/client/` | Humble-View Svelte 5 11-Zone HUD, 4-Stage Client Wire DAG (`client.kernel.svelte.ts`), contextual help router & views | `state/{dag,models,help.context,hud.wire,navigation.sync,security.wire}`, `components/` |
+| `docs/08-sprints/` | Persistent evolutionary sprint archive (`v1.0.0`–`v1.9.7`) organized across 3 era subfolders | `era-1-foundation/`, `era-2-security-hud/`, `era-3-dag-polish/` |
 | `docs/skills/` | Curated agent engineering protocols (`bun-loop-verification`, `mcp-server-dev`, Zero-Trust UI/DAG patterns) | `mcp-server-dev/{SKILL,references/*}.md`, `bun-loop-verification/SKILL.md` |

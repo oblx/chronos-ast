@@ -7,23 +7,16 @@ import { LEXICAL_CONSTANTS } from '@config/metamodel.constants';
 import { CAPABILITY_BITS } from '@config/security.constants';
 import { closeChronosDb, createChronosDb, type ChronosDatabaseHandle } from '@lib/db/client';
 import { ensureSeededOperatorAccount } from '@lib/db/seed.operator';
-import { parseSafeJson } from '@lib/utils/log.sanitizer';
-import { compileHelpBookFromDocs } from '@core/metamodel/help.engine';
 import { bootstrapDefaultWorkspace, indexSourcesIntoDb, type WorkspaceSnapshot } from '@core/metamodel/workspace.indexer';
 import { saveWorkspaceRecord } from '@core/metamodel/workspace/manager/workspace.manager';
 import { evaluateWorkspaceCodeCheck } from '@core/metrics/codecheck.engine';
 import { dispatchWorkflowWebhookAsync } from '@plugins/exporters/webhook.bridge';
-import { handleProjectAndAiRoutes, ensureDefaultProjectsSeeded } from '../routes/project.routes';
-import { handlePrivacyRoutes } from '../routes/privacy.routes';
-import { badRequestResponse, normalizeHeaders, okResponse, requireCapability, resolveRequestPrincipal, sanitizedErrorResponse, type ApiResponseEnvelope, type RequestPrincipal } from './middleware';
-import { handleSecurityRoutes } from '../routes/security.routes';
-import { handleGamificationRoutes } from '../routes/gamification.routes';
-import { ensureCommunityThemesSeeded, handleThemeAndPreferenceRoutes } from '../routes/theme.routes';
-import { handleVaultAndSyncRoutes } from './vault_sync.routes';
-import { handleCollabRoutes } from '../routes/collab.routes';
-import { handleQueryAndExportRoutes, handleWorkspaceRoute, loadLiveDocsMarkdownMap } from './workspace.routes';
-import { handleForensicMcpHttp, handleMcpManifestRoute, handleTwinMcpHttp, type McpRuntimeContext } from '../mcp';
-import { sanitizeInboundPayload, sanitizeOutboundForPrincipal } from '@plugins/sanitizers/form.sanitizer';
+import { ensureDefaultProjectsSeeded } from '../routes/project.routes';
+import { ensureCommunityThemesSeeded } from '../routes/theme.routes';
+import { badRequestResponse, normalizeHeaders, okResponse, parseBodyObject, requireCapability, resolveRequestPrincipal, sanitizedErrorResponse, type ApiResponseEnvelope, type RequestPrincipal } from './middleware';
+import { dispatchChronosDomainRoutes, finalizeEnvelopeForPrincipal, sanitizeInboundBody } from './domain.dispatch';
+import { handleQueryAndExportRoutes, loadLiveDocsMarkdownMap } from './workspace.routes';
+import { type McpRuntimeContext } from '../mcp';
 import { emitClusterServerCommit } from '@server/ws/ws.hub';
 import { setTwinBridgeDbHandle } from '@server/ws/twin.bridge';
 import { serverDagKernel } from './server.kernel';
@@ -60,15 +53,9 @@ export async function resolveWsUpgradePrincipal(token?: string | null): Promise<
 	return resolveRequestPrincipal(activeHandle!, token ? { authorization: `Bearer ${token}` } : {});
 }
 
-async function handleMetamodelRoutes(
+async function handleMetamodelExtraRoutes(
 	urlPath: string, method: string, bodyText: string | undefined, headers: Record<string, string>, principal: RequestPrincipal
 ): Promise<ApiResponseEnvelope | null> {
-	if (urlPath.startsWith(API_ROUTES.HELP_BOOK) && method === 'GET') return okResponse({ chapters: compileHelpBookFromDocs(loadLiveDocsMarkdownMap()) });
-	if (urlPath.startsWith(API_ROUTES.SNAPSHOT) && method === 'GET') {
-		const reqProj = new URL(`http://chronos${urlPath}`).searchParams.get('project');
-		return okResponse((reqProj ? projectSnapshots.get(reqProj) : undefined) ?? (await ensureSnapshot()));
-	}
-	if (urlPath.startsWith(API_ROUTES.WORKSPACES) && method === 'POST') return handleWorkspaceRoute(activeHandle!, cachedSnapshot!, bodyText, method, headers, principal);
 	if (urlPath.startsWith(API_ROUTES.REINDEX_WORKSPACE) && method === 'POST') {
 		const denied = await requireCapability(principal, method, headers, CAPABILITY_BITS.WORKSPACE_INDEX_LOCAL);
 		if (denied) return denied;
@@ -83,7 +70,7 @@ async function handleMetamodelRoutes(
 	if (urlPath.startsWith(API_ROUTES.ANALYZE_SOURCE) && method === 'POST') {
 		const denied = await requireCapability(principal, method, headers, CAPABILITY_BITS.WORKSPACE_INDEX_LOCAL);
 		if (denied) return denied;
-		const parsed = bodyText ? parseSafeJson<Record<string, unknown>>(bodyText) : {};
+		const parsed = parseBodyObject(bodyText);
 		const filePath = String(parsed.filePath ?? '').trim(), sourceCode = String(parsed.sourceCode ?? '').trim();
 		if (!filePath || !sourceCode) return badRequestResponse('Both filePath and sourceCode are required.');
 		customSourceFiles = [...customSourceFiles.filter((f) => f.path !== filePath), { path: filePath, code: sourceCode }];
@@ -101,31 +88,20 @@ export async function handleMetamodelApiRequest(
 	urlPath: string, method: string, bodyText?: string, rawHeaders?: Record<string, string | string[] | undefined>
 ): Promise<ApiResponseEnvelope> {
 	try {
-		await ensureSnapshot();
+		const snapshot = await ensureSnapshot();
 		const headers = normalizeHeaders(rawHeaders);
 		const principal = await resolveRequestPrincipal(activeHandle!, headers);
-		const safeBody = bodyText ? JSON.stringify(sanitizeInboundPayload(parseSafeJson<unknown>(bodyText))) : undefined;
+		const safeBody = sanitizeInboundBody(bodyText);
 		return await serverDagKernel.execute(urlPath, method, principal, safeBody ?? '', async () => {
-			const res = (await serverDagKernel.handleWireObserveRoute(urlPath, method, headers, principal))
-				?? (urlPath.startsWith(API_ROUTES.MCP_MANIFEST) && method === 'GET' ? handleMcpManifestRoute() : null)
-				?? (urlPath.startsWith(API_ROUTES.MCP_TWIN) && method === 'POST' ? await handleTwinMcpHttp(buildMcpContext(), safeBody, principal) : null)
-				?? (urlPath.startsWith(API_ROUTES.MCP_FORENSIC) && method === 'POST' ? await handleForensicMcpHttp(buildMcpContext(), safeBody, principal) : null)
-				?? (await handleSecurityRoutes(activeHandle!, urlPath, method, safeBody, headers, principal))
-				?? (await handlePrivacyRoutes(activeHandle!, urlPath, method, principal))
-				?? (await handleVaultAndSyncRoutes(activeHandle!, urlPath, method, safeBody, headers, principal))
-				?? (await handleCollabRoutes(activeHandle!, urlPath, method, safeBody, principal))
-				?? (await handleThemeAndPreferenceRoutes(activeHandle!, urlPath, method, safeBody, headers, principal))
-				?? (await handleProjectAndAiRoutes(activeHandle!, cachedSnapshot!, urlPath, method, safeBody, headers, principal))
-				?? (await handleGamificationRoutes(activeHandle!, urlPath, method, safeBody, headers, principal))
-				?? (await handleMetamodelRoutes(urlPath, method, safeBody, headers, principal))
-				?? { status: HTTP_STATUS.NOT_FOUND, payload: { error: 'Unknown Chronos API route' } };
+			const res = await dispatchChronosDomainRoutes({
+				handle: activeHandle!, snapshot, getProjectSnapshot: (slug) => (slug ? projectSnapshots.get(slug) : undefined),
+				mcpCtx: buildMcpContext(), urlPath, method, safeBody, headers, principal,
+				extraRoutes: () => handleMetamodelExtraRoutes(urlPath, method, safeBody, headers, principal),
+			});
 			if (res.status === HTTP_STATUS.OK && (method === 'POST' || method === 'PUT' || method === 'DELETE') && !urlPath.startsWith(API_ROUTES.WS_COLLAB)) {
 				emitClusterServerCommit(WORKSPACE_DEFAULTS.CORE_ID, principal.sid, urlPath, principal.username);
 			}
-			const pObj = res.payload as Record<string, unknown> | null;
-			const outMask = pObj && typeof pObj.effectiveMask === 'number' ? pObj.effectiveMask : principal.effectiveMask;
-			const outRole = pObj && pObj.user && typeof (pObj.user as Record<string, unknown>).roleId === 'string' ? String((pObj.user as Record<string, unknown>).roleId) : principal.roleId;
-			return { ...res, payload: sanitizeOutboundForPrincipal(res.payload, outMask, outRole) };
+			return finalizeEnvelopeForPrincipal(res, principal);
 		});
 	} catch (err) {
 		return sanitizedErrorResponse(HTTP_STATUS.BAD_REQUEST, err);

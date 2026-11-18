@@ -10,3 +10,4 @@ export { default as HudBottomDockZones } from './HudBottomDockZones.svelte';
 export { default as HudCompactOverflowDrawer } from './HudCompactOverflowDrawer.svelte';
 export { default as HudIdleCommandBay } from './HudIdleCommandBay.svelte';
 export { default as HudAiCommandDeck } from './HudAiCommandDeck.svelte';
+export * from './top';

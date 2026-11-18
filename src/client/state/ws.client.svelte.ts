@@ -71,7 +71,7 @@ class ChronosWsClient {
 			window.addEventListener('pagehide', () => { void fetch(API_ROUTES.WS_COLLAB, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'LEAVE', clientId: this.clientId, workspaceId: this.activeWorkspaceId }), keepalive: true }).catch(() => {}); });
 		}
 		void this.syncHttpRoom({ action: 'JOIN', workspaceId: this.activeWorkspaceId, projectId, ...(clusterId ? { clusterId: this.clusterId } : {}), scopeKind: this.activeScope, focalEntityId, username: securityWire.username });
-		if (typeof window === 'undefined' || typeof WebSocket === 'undefined') return;
+		if (typeof window === 'undefined' || typeof WebSocket === 'undefined' || (import.meta as { env?: { DEV?: boolean } }).env?.DEV) return;
 		if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
 			this.sendFrame({ type: 'WS_SWITCH_PROJECT_ROOM', workspaceId: this.activeWorkspaceId, projectId, focalEntityId });
 			return;

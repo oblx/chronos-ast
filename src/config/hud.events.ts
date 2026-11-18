@@ -109,7 +109,7 @@ export const STATIONS_DIRECTORY: readonly StationCatalogItem[] = [
 	{ id: 'st-preset', category: 'MANAGE', iconGlyph: '◈', label: 'Open Preset Repo', description: 'Hydrate built-in multi-language corpus.', shortcutKey: '—', action: { type: 'OPEN_PRESET' } },
 	{ id: 'st-inspector', category: 'INTERACT', iconGlyph: '⌥', label: 'Source & AST Span', description: 'Edit source slices and live-reindex symbols.', shortcutKey: '9', action: { type: 'VIEW', view: HUD_VIEWS.INSPECTOR } },
 	{ id: 'st-uml-cls', category: 'INTERACT', iconGlyph: '◫', label: 'UML Studio (Class)', description: 'Sugiyama class hierarchy, PlantUML & Mermaid.', shortcutKey: '—', action: { type: 'VIEW', view: HUD_VIEWS.UML_CLASS } },
-	{ id: 'st-uml-seq', category: 'INTERACT', iconGlyph: '↕', label: 'UML Studio (Sequence)', description: 'Activation bars, lifelines & loop/alt frames.', shortcutKey: '—', action: { type: 'VIEW', view: HUD_VIEWS.UML_SEQUENCE } },
+	{ id: 'st-uml-seq', category: 'INTERACT', iconGlyph: '⇅', label: 'UML Studio (Sequence)', description: 'Activation bars, lifelines & loop/alt frames.', shortcutKey: '—', action: { type: 'VIEW', view: HUD_VIEWS.UML_SEQUENCE } },
 	{ id: 'st-shared', category: 'INTERACT', iconGlyph: '◎', label: 'UML Shared Objects', description: '3-column mutator/state/reader contention hub.', shortcutKey: '—', action: { type: 'VIEW', view: HUD_VIEWS.SHARED_OBJECTS } },
 	{ id: 'st-mermaid', category: 'INTERACT', iconGlyph: '❖', label: 'Mermaid Studio', description: 'Bidirectional flowchart, class & sequence DSL.', shortcutKey: 'M', action: { type: 'VIEW', view: HUD_VIEWS.MERMAID } },
 	{ id: 'st-achievements', category: 'INTERACT', iconGlyph: '★', label: 'Card Vault', description: 'Inspect Cubic XP progress & leveled cards.', shortcutKey: 'A', action: { type: 'MODAL', modal: HUD_MODALS.ACHIEVEMENT_VAULT } },
@@ -118,5 +118,5 @@ export const STATIONS_DIRECTORY: readonly StationCatalogItem[] = [
 	{ id: 'st-sarif', category: 'ADMIN', iconGlyph: '↥', label: 'Export SARIF 2.1.0', description: 'Generate static analysis exchange payload.', shortcutKey: '—', requiredMask: CAPABILITY_BITS.EXPORT_ARTIFACTS, action: { type: 'EXPORT', format: EXPORT_FORMATS.SARIF_210 } },
 	{ id: 'st-stealth', category: 'ADMIN', iconGlyph: '◰', label: 'Stealth World Mode', description: 'Fold all 8 perimeter zones (Tab / Z).', shortcutKey: 'Z', action: { type: 'STEALTH' } },
 	{ id: 'st-wire-tap', category: 'ADMIN', iconGlyph: '◈', label: 'Live Wire Observatory', description: 'Inspect real-time Client & Server DAG event frames.', shortcutKey: 'W', requiredMask: CAPABILITY_BITS.ADMIN_WIRE_OBSERVE, action: { type: 'MODAL', modal: HUD_MODALS.WIRE_OBSERVATORY } },
-	{ id: 'st-settings', category: 'ADMIN', iconGlyph: '⚙', label: 'HUD & Admin Console', description: 'Configure themes, Chronos RBAC, and Vault.', shortcutKey: ',', action: { type: 'MODAL', modal: HUD_MODALS.SETTINGS } },
+	{ id: 'st-settings', category: 'ADMIN', iconGlyph: '⎈', label: 'HUD & Admin Console', description: 'Configure themes, Chronos RBAC, and Vault.', shortcutKey: ',', action: { type: 'MODAL', modal: HUD_MODALS.SETTINGS } },
 ] as const;

@@ -4,10 +4,11 @@
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { API_ROUTES, type HudViewMode } from '@config/constants';
+	import { type HudViewMode } from '@config/constants';
+	import { TOME_SSG_CHAPTERS } from '@config/help/index';
 	import { HELP_SKILL_TIERS, type HelpSkillTier } from '@config/registries/help.registry';
 	import { CHAMFER_PROFILES } from '@config/hud.tokens';
-	import { clientDagKernel, compileHelpBookFromDocs, filterHelpChapters, hudWire, type HelpChapterSpec, type HelpSubStepSpec } from '@client/state';
+	import { filterHelpChapters, hudWire, type HelpChapterSpec, type HelpSubStepSpec } from '@client/state';
 	import HudChamferButton from '@client/components/atoms/HudChamferButton.svelte';
 	import HudModalShell from '@client/components/modals/HudModalShell.svelte';
 	import HudModalHeader from '@client/components/modals/HudModalHeader.svelte';
@@ -18,9 +19,7 @@
 	interface Props { isOpen: boolean; activeView: HudViewMode; onClose: () => void; onSelectView: (view: HudViewMode) => void; }
 	let { isOpen, onClose, onSelectView }: Props = $props();
 
-	const BUNDLED_DOCS = import.meta.glob('/docs/**/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
-
-	let chapters = $state<readonly HelpChapterSpec[]>(compileHelpBookFromDocs(BUNDLED_DOCS));
+	let chapters = $state<readonly HelpChapterSpec[]>(TOME_SSG_CHAPTERS as readonly HelpChapterSpec[]);
 	let activeTier = $state<'ALL' | HelpSkillTier>('ALL'), activeChronicle = $state<string>('ALL'), searchQuery = $state('');
 	let selectedChapterId = $state('00-01'), selectedStepIdx = $state(0), chapterPage = $state(0);
 	let completedStepIds = $state<Record<string, boolean>>({}), hoverTooltipsEnabled = $state(false), spotlightOnlyMode = $state(false);
@@ -75,9 +74,32 @@
 		const idx = visibleChapters.findIndex((c) => c.id === activeChapter.id);
 		if (idx > 0) { const prev = visibleChapters[idx - 1]!; selectChapter(prev.id); selectedStepIdx = Math.max(0, prev.subSteps.length - 1); }
 	}
+	let lastHelpNonce = 0;
+	$effect(() => {
+		const req = hudWire.helpTargetRequest;
+		if (!req || req.nonce === lastHelpNonce) return;
+		lastHelpNonce = req.nonce;
+		activeTier = 'ALL';
+		activeChronicle = 'ALL';
+		searchQuery = '';
+		spotlightOnlyMode = false;
+		const matchIdx = chapters.findIndex((c) => c.id === req.chapterId || c.docCode === req.chapterId);
+		if (matchIdx >= 0) {
+			const targetChap = chapters[matchIdx]!;
+			selectedChapterId = targetChap.id;
+			selectedStepIdx = Math.max(0, Math.min(targetChap.subSteps.length - 1, req.stepIdx));
+			chapterPage = Math.floor(matchIdx / 6);
+		}
+	});
 	$effect(() => { if ((isOpen || spotlightOnlyMode) && currentStep) overlayRef?.syncTargetRect(currentStep.anchorId); else overlayRef?.syncTargetRect(undefined); });
+	function handleKeydown(ev: KeyboardEvent): void {
+		if (!isOpen || spotlightOnlyMode) return;
+		const tag = (ev.target as HTMLElement | null)?.tagName;
+		if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+		if (ev.key === 'ArrowRight') { ev.preventDefault(); nextStep(); }
+		else if (ev.key === 'ArrowLeft') { ev.preventDefault(); prevStep(); }
+	}
 	onMount(() => {
-		void clientDagKernel.requestJson<{ chapters?: readonly HelpChapterSpec[] }>(API_ROUTES.HELP_BOOK, { sourceZone: 'APP_MODAL', intentKind: 'HELP_BOOK_LOAD' }).then((r) => { if (r.ok && r.data.chapters?.length) chapters = r.data.chapters; });
 		const onOver = (ev: MouseEvent) => {
 			if (!hoverTooltipsEnabled || isOpen) return;
 			const host = (ev.target as HTMLElement | null)?.closest?.('[data-help-target]') as HTMLElement | null;
@@ -86,13 +108,14 @@
 			for (const ch of chapters) for (const st of ch.subSteps) if (st.anchorId === anchor) { overlayRef?.showHoverHint(ch, st, host.getBoundingClientRect()); return; }
 		};
 		window.addEventListener('mouseover', onOver, { passive: true });
-		return () => window.removeEventListener('mouseover', onOver);
+		window.addEventListener('keydown', handleKeydown);
+		return () => { window.removeEventListener('mouseover', onOver); window.removeEventListener('keydown', handleKeydown); };
 	});
 </script>
 
 <HelpSpotlightOverlay bind:this={overlayRef} {currentStep} {hoverTooltipsEnabled} {spotlightOnlyMode} onFocusTarget={(st) => jumpToStepTarget(st, false)} onReopenBook={() => (spotlightOnlyMode = false)} onDismissSpotlight={() => { spotlightOnlyMode = false; onClose(); }} />
 
-<HudModalShell isOpen={isOpen && !spotlightOnlyMode} ariaLabel="Architect's Field Tome" maxWidthClass="max-w-6xl" {onClose}>
+<HudModalShell isOpen={isOpen && !spotlightOnlyMode} ariaLabel="Architect's Field Tome" maxWidthClass="max-w-6xl" transitionKey={`${activeChapter?.id ?? '00-01'}-${selectedStepIdx}`} {onClose}>
 	{#snippet header()}
 		<HudModalHeader title="Architect's Field Tome" subtitle={`INTERACTIVE ARCHITECTURAL ENCYCLOPEDIA · 8 CHRONICLES · ${chapters.length} CHAPTERS`} {onClose} />
 		<div class="px-5 py-2 border-b border-[var(--hud-border)] bg-[var(--hud-bg)]/90 flex flex-wrap items-center justify-between gap-2 shrink-0 font-mono text-xs">
@@ -104,7 +127,7 @@
 			</div>
 			<div class="flex items-center gap-1.5 flex-nowrap shrink-0">
 				<input type="search" data-testid="help-search-input" bind:value={searchQuery} oninput={() => (chapterPage = 0)} placeholder="Search tome (CFG, LCOM4)..." class="min-w-[200px] w-[224px] bg-[var(--hud-surface)] border border-[var(--hud-border)] px-2.5 py-1 text-xs text-[var(--hud-text)] shrink-0" />
-				<HudChamferButton chamferCorner={CHAMFER_PROFILES.RIGHT_END_CAP} cutPx={5} variant="accent" testid="resume-hud-tour-btn" onclick={() => { hudWire.resumeTour(); onClose(); }} className="px-3 py-1 text-[11px] font-bold shrink-0">⚡ Replay HUD Tour</HudChamferButton>
+				<HudChamferButton chamferCorner={CHAMFER_PROFILES.RIGHT_END_CAP} cutPx={5} variant="accent" testid="resume-hud-tour-btn" onclick={() => { hudWire.resumeTour(); onClose(); }} className="px-3 py-1 text-[11px] font-bold shrink-0">↯ Replay HUD Tour</HudChamferButton>
 			</div>
 		</div>
 	{/snippet}

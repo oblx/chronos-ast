@@ -2,7 +2,7 @@
  * @author Oblx <code@oblx.dev>
  * @description Two-level hierarchical cushion Treemap layout (File/Module containers + leaf squarified tiling) and backward-compatible flat squarified builder.
  */
-import { resolveVirtualLayerForEntity } from '@config/registries/architecture.schema';
+import { ARCH_GROUPING_MODES, resolveArchitectureGroupLabel, resolveVirtualLayerForEntity, type ArchGroupingMode } from '@config/registries/architecture.schema';
 import { HUD_CONFIG } from '@config/constants';
 import { TREEMAP_CUSHION_TOKENS } from '@config/hud/hud.projections';
 import type { GraphEntityNode } from '../graph_traversal';
@@ -93,11 +93,13 @@ function buildContainerGroup(
 export function computeHierarchicalTreemap(
 	nodes: readonly GraphEntityNode[], violationMap: Readonly<Record<number, number>>,
 	viewportWidth = 860, viewportHeight = 480, areaMode: TreemapAreaMetric = 'LOC',
-	heatMode: TreemapHeatMetric = 'CYCLOMATIC', focusedContainerName: string | null = null
+	heatMode: TreemapHeatMetric = 'CYCLOMATIC', focusedContainerName: string | null = null,
+	archMode: ArchGroupingMode = ARCH_GROUPING_MODES.CUSTOM_RULES
 ): HierarchicalTreemapProjection {
 	const groups = new Map<string, GraphEntityNode[]>();
 	for (const node of nodes) {
-		const sep = node.qualifiedName.indexOf('::'), container = sep >= 0 ? node.qualifiedName.slice(0, sep) : node.qualifiedName;
+		const sep = node.qualifiedName.indexOf('::'), filePrefix = sep >= 0 ? node.qualifiedName.slice(0, sep) : node.qualifiedName;
+		const container = archMode === ARCH_GROUPING_MODES.CUSTOM_RULES ? filePrefix : resolveArchitectureGroupLabel(node.qualifiedName, archMode);
 		if (focusedContainerName && container !== focusedContainerName) continue;
 		const list = groups.get(container) ?? []; list.push(node); groups.set(container, list);
 	}

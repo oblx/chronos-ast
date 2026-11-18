@@ -4,6 +4,7 @@
 -->
 <script lang="ts">
 	import { HUD_CONFIG } from '@config/constants';
+	import { HUD_INTENT_KINDS } from '@config/hud.tokens';
 	import { MERMAID_STUDIO_TOKENS } from '@config/hud/hud.projections';
 	import {
 		type GraphEntityNode,
@@ -28,6 +29,7 @@
 	let editorCollapsed = $state<boolean>(false);
 	let svgEl = $state<SVGSVGElement | null>(null);
 	let localCam = $state({ panX: 0, panY: 0, zoomScale: 1 });
+	let copiedDsl = $state(false);
 
 	$effect(() => { if (hudWire.mermaidDraftDsl) { dslText = hudWire.mermaidDraftDsl; hudWire.mermaidDraftDsl = ''; } });
 
@@ -37,10 +39,21 @@
 	function syncFromActiveMetamodel(kind: MermaidProjectionSourceKind = sourceKind): void {
 		sourceKind = kind;
 		dslText = metamodelToMermaidDsl({ kind, focalEntity, nodes, edges, sourceMap });
+		hudWire.emitUiIntent(HUD_INTENT_KINDS.PROJECTION_OPTION_TOGGLE, 'WORLD_CANVAS', { view: 'MERMAID', sourceKind: kind });
 	}
+	function toggleEditorCollapsed(): void { editorCollapsed = !editorCollapsed; hudWire.emitUiIntent(HUD_INTENT_KINDS.PROJECTION_OPTION_TOGGLE, 'WORLD_CANVAS', { view: 'MERMAID', editorCollapsed }); }
 	function focusMatchingEntity(label: string): void {
 		const hit = nodes.find((n) => n.name.toLowerCase() === label.toLowerCase() || label.toLowerCase().includes(n.name.toLowerCase()));
-		if (hit) onSelectEntity(hit.id);
+		if (hit) {
+			hudWire.emitUiIntent(HUD_INTENT_KINDS.FOCUS_ENTITY, 'WORLD_CANVAS', { view: 'MERMAID', label, entityId: hit.id }, hit.id);
+			onSelectEntity(hit.id);
+		}
+	}
+	function copyDsl(): void {
+		void navigator.clipboard?.writeText(dslText);
+		copiedDsl = true;
+		hudWire.emitUiIntent(HUD_INTENT_KINDS.PROJECTION_OPTION_TOGGLE, 'WORLD_CANVAS', { view: 'MERMAID', action: 'COPY_DSL' });
+		setTimeout(() => (copiedDsl = false), 1500);
 	}
 	function downloadTextFile(filename: string, content: string, mime: string): void {
 		const url = URL.createObjectURL(new Blob([content], { type: mime }));
@@ -53,13 +66,14 @@
 	<div class="relative z-10 px-3 py-1.5 border-b border-[var(--hud-border)] bg-[var(--hud-panel)]/95 flex flex-wrap items-center justify-between gap-2 shrink-0">
 		<div class="flex flex-wrap items-center gap-1.5">
 			<span class="text-[var(--hud-accent-secondary)] font-bold">◇ MERMAID STUDIO // {parsed.kind}</span>
-			<button type="button" onclick={() => (editorCollapsed = !editorCollapsed)} class="px-2 py-0.5 text-[11px] border border-[var(--hud-border)] text-[var(--hud-muted)] cursor-pointer">{editorCollapsed ? 'Show DSL' : 'Hide DSL'}</button>
+			<button type="button" onclick={toggleEditorCollapsed} class="px-2 py-0.5 text-[11px] border border-[var(--hud-border)] text-[var(--hud-muted)] cursor-pointer">{editorCollapsed ? 'Show DSL' : 'Hide DSL'}</button>
 			{#each (['BUTTERFLY', 'CFG', 'DFG', 'UML_CLASS', 'UML_SEQUENCE'] as const) as k (k)}
 				<button type="button" onclick={() => syncFromActiveMetamodel(k)} class={`px-1.5 py-0.5 text-[11px] border cursor-pointer ${sourceKind === k ? 'border-[var(--hud-accent-primary)] text-[var(--hud-accent-primary)] font-bold' : 'border-[var(--hud-border)] text-[var(--hud-muted)]'}`}>{k.replace('UML_', '')}</button>
 			{/each}
 		</div>
 		<div class="flex items-center gap-1 text-[11px]">
 			<button type="button" onclick={() => syncFromActiveMetamodel()} class="px-2 py-0.5 bg-[var(--hud-accent-primary)] text-[var(--hud-bg-base)] font-bold cursor-pointer">Sync Active View</button>
+			<button type="button" data-testid="mermaid-copy-dsl-btn" onclick={copyDsl} class="px-2 py-0.5 border border-[var(--hud-accent-primary)] text-[var(--hud-accent-primary)] cursor-pointer">{copiedDsl ? 'Copied' : 'Copy DSL'}</button>
 			<button type="button" onclick={() => downloadTextFile('chronos-diagram.mmd', dslText, 'text/plain')} class="px-2 py-0.5 border border-[var(--hud-accent-secondary)] text-[var(--hud-accent-secondary)] cursor-pointer">.mmd</button>
 			<button type="button" onclick={() => svgEl && downloadTextFile('chronos-diagram.svg', svgEl.outerHTML, 'image/svg+xml')} class="px-2 py-0.5 border border-[var(--hud-nominal)] text-[var(--hud-nominal)] cursor-pointer">.svg</button>
 			<button type="button" onclick={() => hudWire.triggerCanvasRecenter()} class="px-2 py-0.5 border border-[var(--hud-border)] text-[var(--hud-muted)] cursor-pointer">{Math.round(localCam.zoomScale * HUD_CONFIG.PERCENTAGE_MAX)}%</button>

@@ -21,15 +21,18 @@ export function computeFocalPointZoom(
 	return { panX: Math.round(cursorX - worldX * zoomScale), panY: Math.round(cursorY - worldY * zoomScale), zoomScale };
 }
 
-export function fitGraphToSafeCorridor(bounds: RectExtent, viewportRect: RectExtent, paddingPx = 28, nodeCount?: number): ViewportCameraState {
+export function fitGraphToSafeCorridor(bounds: RectExtent, viewportRect: RectExtent, paddingPx = 28, offsetsOrNodes?: DrawerSafeOffsets | number, maybeNodes?: number): ViewportCameraState {
+	const offsets = typeof offsetsOrNodes === 'object' && offsetsOrNodes !== null ? offsetsOrNodes : { leftPx: 0, rightPx: 0 };
+	const nodeCount = typeof offsetsOrNodes === 'number' ? offsetsOrNodes : maybeNodes;
+	const leftOff = offsets.leftPx ?? 0, rightOff = offsets.rightPx ?? 0;
 	const bw = Math.max(120, bounds.width), bh = Math.max(120, bounds.height);
-	const corridorW = Math.max(240, viewportRect.width - paddingPx * 2), vh = Math.max(180, viewportRect.height - paddingPx * 2);
+	const corridorW = Math.max(240, viewportRect.width - paddingPx * 2 - leftOff - rightOff), vh = Math.max(180, viewportRect.height - paddingPx * 2);
 	const rawScale = Math.min(corridorW / bw, vh / bh);
 	const isSmall = typeof nodeCount === 'number' && nodeCount > 0 && nodeCount <= CAMERA_PHYSICS_TOKENS.AUTO_FIT_SMALL_SUBGRAPH_NODES;
 	const autoMinZoom = isSmall ? CAMERA_PHYSICS_TOKENS.MIN_AUTO_FIT_ZOOM : CAMERA_PHYSICS_TOKENS.MIN_ZOOM;
 	const minScale = rawScale < 0.85 ? Math.max(autoMinZoom, rawScale) : 0.85;
 	const zoomScale = Number(clampValue(rawScale, minScale, 1.15).toFixed(3));
-	return { panX: Math.round(paddingPx + (corridorW - bw * zoomScale) / 2), panY: Math.round(paddingPx + (vh - bh * zoomScale) / 2), zoomScale };
+	return { panX: Math.round(paddingPx + leftOff + (corridorW - bw * zoomScale) / 2), panY: Math.round(paddingPx + (vh - bh * zoomScale) / 2), zoomScale };
 }
 
 export class ViewportCameraController {
@@ -54,8 +57,8 @@ export class ViewportCameraController {
 	closeContextMenu(): void { if (this.contextMenu.open) this.contextMenu = { open: false, x: 0, y: 0, entityId: null }; }
 	openContextMenu(x: number, y: number, entityId: number | null = null): void { this.contextMenu = { open: true, x: Math.round(x), y: Math.round(y), entityId }; }
 
-	fitToBounds(bounds: RectExtent, viewportRect: RectExtent, paddingPx = 28, nodeCount?: number): ViewportCameraState {
-		const fitted = fitGraphToSafeCorridor(bounds, viewportRect, paddingPx, nodeCount);
+	fitToBounds(bounds: RectExtent, viewportRect: RectExtent, paddingPx = 28, offsetsOrNodes?: DrawerSafeOffsets | number, maybeNodes?: number): ViewportCameraState {
+		const fitted = fitGraphToSafeCorridor(bounds, viewportRect, paddingPx, offsetsOrNodes, maybeNodes);
 		this.zoomScale = fitted.zoomScale; this.panX = fitted.panX; this.panY = fitted.panY; return fitted;
 	}
 	stepZoom(delta: number, cursorX = 720, cursorY = 450): void {

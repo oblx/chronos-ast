@@ -59,6 +59,7 @@ export default defineConfig(({ command }) => {
 			dedupe: ['svelte'],
 			alias: {
 				'@': `${rootDir}/src`,
+				'@ui': `${rootDir}/src/ui`,
 				'@config': `${rootDir}/src/config`,
 				'@client': `${rootDir}/src/client`,
 				'@core': `${rootDir}/src/core`,

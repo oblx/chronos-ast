@@ -110,7 +110,7 @@
 {#if wsClient.pendingInvites.length > 0}
 	{@const topInvite = wsClient.pendingInvites[0]!}
 	<div data-testid="collab-invite-toast" class="fixed top-[92px] left-1/2 -translate-x-1/2 z-50 pointer-events-auto flex items-center gap-3 px-4 py-2 font-mono text-[12px] bg-[var(--hud-surface)] border-2 border-[var(--hud-accent-primary)] text-[var(--hud-text)] shadow-lg">
-		<span class="text-[var(--hud-accent-secondary)] font-bold">⚡ COLLAB INVITE</span>
+		<span class="text-[var(--hud-accent-secondary)] font-bold">↯ COLLAB INVITE</span>
 		<span>from <b>{String(topInvite.fromUsername ?? `UID #${topInvite.fromUserId}`)}</b> · Scope: <span class="text-[var(--hud-accent-primary)] font-bold">{String(topInvite.scopeKind ?? 'WORKSPACE')}</span></span>
 		<button type="button" onclick={() => respondToInvite(topInvite, true)} class="px-2 py-0.5 border border-[var(--hud-nominal)] text-[var(--hud-nominal)] font-bold cursor-pointer">✓ Join Session</button>
 		<button type="button" onclick={() => respondToInvite(topInvite, false)} class="px-2 py-0.5 border border-[var(--hud-border)] text-[var(--hud-muted)] cursor-pointer">× Decline</button>

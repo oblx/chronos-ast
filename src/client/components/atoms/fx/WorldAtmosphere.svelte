@@ -106,13 +106,9 @@
 		</div>
 	{/if}
 
-	<!-- Layer 4: 12px Inset Perimeter Frame, CRT Scanline Weave & Vignette -->
+	<!-- Layer 4: CRT Scanline Weave & Vignette (outer bevels framed by screen-corner pods) -->
 	<div
 		class="absolute inset-0"
 		style={`background: repeating-linear-gradient(180deg, transparent 0px, transparent 2px, rgba(0, 0, 0, ${cfg.scanlineOpacity}) 2px, rgba(0, 0, 0, ${cfg.scanlineOpacity}) 3px), radial-gradient(ellipse 88% 82% at 50% 50%, transparent 52%, rgba(0, 0, 0, ${cfg.vignetteStrength}) 100%);`}
-	></div>
-	<div
-		class="absolute border border-[var(--hud-accent-primary)]/35"
-		style={`inset: ${cfg.insetFrameMarginPx}px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hud-accent-secondary) 18%, transparent);`}
 	></div>
 </div>

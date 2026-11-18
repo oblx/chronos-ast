@@ -61,7 +61,7 @@ export const HUD_THEME_PRESETS: Readonly<Record<HudThemeId, HudThemePreset>> = {
 	OBSIDIAN_CYBER: {
 		id: HUD_THEME_IDS.OBSIDIAN_CYBER, label: 'Obsidian Brass', polarity: 'DARK',
 		bgCanvas: '#07090E', bgPanel: '#0C1018', bgSurface: '#131823', borderHairline: '#232B3B',
-		textPrimary: '#F3EFE6', textMuted: '#989FA9', accentPrimary: '#38BDF8', accentSecondary: '#D4AF37',
+		textPrimary: '#F3EFE6', textMuted: '#A3B8D0', accentPrimary: '#38BDF8', accentSecondary: '#D4AF37',
 		brassFrame: '#9A7D32', statusNominal: '#2EB872', statusWarning: '#E5A93B', statusDanger: '#E05252',
 		gridLine: '#1E2D44', coreGradientColor: '#10243E', midGradientColor: '#0A1322', edgeGradientColor: '#05080D',
 		...DARK_SYNTAX_DEFAULTS,
@@ -69,7 +69,7 @@ export const HUD_THEME_PRESETS: Readonly<Record<HudThemeId, HudThemePreset>> = {
 	TITANIUM_NIGHT: {
 		id: HUD_THEME_IDS.TITANIUM_NIGHT, label: 'Phosphor CRT', polarity: 'DARK',
 		bgCanvas: '#060B09', bgPanel: '#0B1410', bgSurface: '#111F19', borderHairline: '#1D3329',
-		textPrimary: '#E7F5EC', textMuted: '#88A697', accentPrimary: '#34D399', accentSecondary: '#FBBF24',
+		textPrimary: '#E7F5EC', textMuted: '#A3B8D0', accentPrimary: '#34D399', accentSecondary: '#FBBF24',
 		brassFrame: '#228B64', statusNominal: '#34D399', statusWarning: '#FBBF24', statusDanger: '#F87171',
 		gridLine: '#1A382C', coreGradientColor: '#0E2E23', midGradientColor: '#081913', edgeGradientColor: '#040907',
 		...DARK_SYNTAX_DEFAULTS, syntaxKeyword: '#34D399', syntaxFn: '#FBBF24',
@@ -77,7 +77,7 @@ export const HUD_THEME_PRESETS: Readonly<Record<HudThemeId, HudThemePreset>> = {
 	VOID_AMBER: {
 		id: HUD_THEME_IDS.VOID_AMBER, label: 'Stealth Cobalt', polarity: 'DARK',
 		bgCanvas: '#070B14', bgPanel: '#0C1220', bgSurface: '#141D30', borderHairline: '#24324E',
-		textPrimary: '#ECF2FC', textMuted: '#8FA2C2', accentPrimary: '#22D3EE', accentSecondary: '#F59E0B',
+		textPrimary: '#ECF2FC', textMuted: '#A3B8D0', accentPrimary: '#22D3EE', accentSecondary: '#F59E0B',
 		brassFrame: '#4C749E', statusNominal: '#10B981', statusWarning: '#F59E0B', statusDanger: '#EF4444',
 		gridLine: '#1D3152', coreGradientColor: '#132A4A', midGradientColor: '#0B1628', edgeGradientColor: '#050911',
 		...DARK_SYNTAX_DEFAULTS, syntaxKeyword: '#22D3EE', syntaxFn: '#F59E0B',
@@ -85,7 +85,7 @@ export const HUD_THEME_PRESETS: Readonly<Record<HudThemeId, HudThemePreset>> = {
 	CLINICAL_LAB: {
 		id: HUD_THEME_IDS.CLINICAL_LAB, label: 'Alabaster Lab', polarity: 'LIGHT',
 		bgCanvas: '#F0F5FA', bgPanel: '#FFFFFF', bgSurface: '#E6EEF6', borderHairline: '#BCCCDC',
-		textPrimary: '#0F172A', textMuted: '#475569', accentPrimary: '#0284C7', accentSecondary: '#D97706',
+		textPrimary: '#0F172A', textMuted: '#334155', accentPrimary: '#0284C7', accentSecondary: '#D97706',
 		brassFrame: '#64748B', statusNominal: '#059669', statusWarning: '#B45309', statusDanger: '#DC2626',
 		gridLine: '#94A3B8', coreGradientColor: '#FFFFFF', midGradientColor: '#E8F1FA', edgeGradientColor: '#D5E3F2',
 		...LIGHT_SYNTAX_DEFAULTS,
@@ -93,7 +93,7 @@ export const HUD_THEME_PRESETS: Readonly<Record<HudThemeId, HudThemePreset>> = {
 	PAPER_ARCHITECT: {
 		id: HUD_THEME_IDS.PAPER_ARCHITECT, label: 'Archival Vellum', polarity: 'LIGHT',
 		bgCanvas: '#F4EFE6', bgPanel: '#FBF8F3', bgSurface: '#EAE2D3', borderHairline: '#C8B99E',
-		textPrimary: '#1E1A14', textMuted: '#5E5548', accentPrimary: '#8C621C', accentSecondary: '#0369A1',
+		textPrimary: '#1E1A14', textMuted: '#334155', accentPrimary: '#8C621C', accentSecondary: '#0369A1',
 		brassFrame: '#B8954F', statusNominal: '#166534', statusWarning: '#B45309', statusDanger: '#B91C1C',
 		gridLine: '#A8987D', coreGradientColor: '#FFFDF8', midGradientColor: '#F3ECE0', edgeGradientColor: '#E3D8C4',
 		...LIGHT_SYNTAX_DEFAULTS, syntaxKeyword: '#8C621C', syntaxFn: '#0369A1',
@@ -101,7 +101,7 @@ export const HUD_THEME_PRESETS: Readonly<Record<HudThemeId, HudThemePreset>> = {
 	DAYLIGHT_SOLAR: {
 		id: HUD_THEME_IDS.DAYLIGHT_SOLAR, label: 'Daylight Blueprint', polarity: 'LIGHT',
 		bgCanvas: '#1E5B94', bgPanel: '#F4F9FF', bgSurface: '#DCEBFE', borderHairline: '#8AB8E6',
-		textPrimary: '#0F2544', textMuted: '#3E5B84', accentPrimary: '#0284C7', accentSecondary: '#EAB308',
+		textPrimary: '#0F2544', textMuted: '#334155', accentPrimary: '#0284C7', accentSecondary: '#EAB308',
 		brassFrame: '#3B82F6', statusNominal: '#047857', statusWarning: '#C2410C', statusDanger: '#DC2626',
 		gridLine: '#93C5FD', coreGradientColor: '#E8F3FF', midGradientColor: '#CFE5FC', edgeGradientColor: '#B4D4F7',
 		...LIGHT_SYNTAX_DEFAULTS,

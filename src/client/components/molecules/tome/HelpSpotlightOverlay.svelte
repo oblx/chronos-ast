@@ -4,7 +4,7 @@
 -->
 <script lang="ts">
 	import { CHAMFER_PROFILES, HELP_BOOK_TOKENS } from '@config/hud.tokens';
-	import { computeFloatingTooltipPosition, type HelpSubStepSpec } from '@client/state';
+	import { computeFloatingTooltipPosition, type HelpChapterSpec, type HelpSubStepSpec } from '@client/state';
 	import HudChamferButton from '@client/components/atoms/HudChamferButton.svelte';
 
 	interface Props {
@@ -22,11 +22,13 @@
 	let hoveredHint = $state<{ chapter: HelpChapterSpec; step: HelpSubStepSpec; x: number; y: number } | null>(null);
 
 	export function syncTargetRect(anchor: string | undefined): void {
-		if (!anchor || typeof document === 'undefined') { targetRect = null; return; }
+		if (!anchor || typeof document === 'undefined') { if (targetRect !== null) targetRect = null; return; }
 		const el = document.querySelector(`[data-help-target="${anchor}"]`);
-		if (!el) { targetRect = null; return; }
+		if (!el) { if (targetRect !== null) targetRect = null; return; }
 		const r = el.getBoundingClientRect();
-		targetRect = { top: Math.round(r.top), left: Math.round(r.left), width: Math.round(r.width), height: Math.round(r.height) };
+		const next = { top: Math.round(r.top), left: Math.round(r.left), width: Math.round(r.width), height: Math.round(r.height) };
+		if (targetRect && targetRect.top === next.top && targetRect.left === next.left && targetRect.width === next.width && targetRect.height === next.height) return;
+		targetRect = next;
 	}
 
 	export function showHoverHint(chapter: HelpChapterSpec, step: HelpSubStepSpec, rect: DOMRect): void {
